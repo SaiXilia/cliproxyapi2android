@@ -82,12 +82,12 @@ func ensureInitialConfigFile(cfgPath, host string, port int, authDir string) err
 	}
 
 	initialConfig := map[string]any{
-		"host":     host,
+		"host":     "0.0.0.0",
 		"port":     port,
 		"auth-dir": authDir,
 		"api-keys": []string{}, // 默认免密模式，便于手机端浏览器与各类客户端开箱即用
 		"remote-management": map[string]any{
-			"allow-remote": false,
+			"allow-remote": true,
 			"secret-key":   "mgmt-" + generateRandomHex(16),
 		},
 	}
@@ -173,7 +173,7 @@ func StartServer(cConfigDir *C.char, cHost *C.char, port C.int) C.int {
 		targetPort = 8317
 	}
 
-	host := "127.0.0.1"
+	host := "0.0.0.0"
 	if cHost != nil {
 		if h := strings.TrimSpace(C.GoString(cHost)); h != "" {
 			host = h

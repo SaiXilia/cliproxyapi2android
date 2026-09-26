@@ -52,7 +52,7 @@ class CLIProxyForegroundService : Service() {
 
         val configDir = intent?.getStringExtra(EXTRA_CONFIG_DIR)
             ?: "${noBackupFilesDir.absolutePath}/cliproxy"
-        val host = intent?.getStringExtra(EXTRA_HOST) ?: "127.0.0.1"
+        val host = intent?.getStringExtra(EXTRA_HOST) ?: "0.0.0.0"
         val port = intent?.getIntExtra(EXTRA_PORT, 8317) ?: 8317
 
         startForegroundNotification(host, port)
