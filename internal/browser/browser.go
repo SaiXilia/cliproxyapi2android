@@ -1,3 +1,5 @@
+//go:build !android
+
 // Package browser provides cross-platform functionality for opening URLs in the default web browser.
 // It abstracts the underlying operating system commands and provides a simple interface.
 package browser
