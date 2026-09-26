@@ -85,11 +85,10 @@ func ensureInitialConfigFile(cfgPath, host string, port int, authDir string) err
 		"host":     host,
 		"port":     port,
 		"auth-dir": authDir,
-		"api-keys": []string{
-			"cpa-" + generateRandomHex(16),
-		},
-		"management": map[string]any{
-			"secret": "mgmt-" + generateRandomHex(16),
+		"api-keys": []string{}, // 默认免密模式，便于手机端浏览器与各类客户端开箱即用
+		"remote-management": map[string]any{
+			"allow-remote": false,
+			"secret-key":   "mgmt-" + generateRandomHex(16),
 		},
 	}
 

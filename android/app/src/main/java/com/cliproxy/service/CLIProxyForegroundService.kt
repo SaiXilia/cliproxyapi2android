@@ -32,7 +32,7 @@ class CLIProxyForegroundService : Service() {
         const val EXTRA_PORT = "extra_port"
 
         private const val NOTIFICATION_ID = 8317
-        private const val CHANNEL_ID = "cliproxy_channel"
+        private const val CHANNEL_ID = "cliproxy_service_channel_v2"
     }
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -84,10 +84,8 @@ class CLIProxyForegroundService : Service() {
     }
 
     private fun startForegroundNotification(host: String, port: Int) {
-        val stopIntent = Intent(this, CLIProxyForegroundService::class.java).apply {
-            action = ACTION_STOP
-        }
-        val stopPendingIntent = PendingIntent.getService(
+        val stopIntent = Intent(this, StopReceiver::class.java)
+        val stopPendingIntent = PendingIntent.getBroadcast(
             this, 1, stopIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -98,12 +96,19 @@ class CLIProxyForegroundService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        // 使用 MediaStyle 强制在紧凑视图（折叠通知）下也固定显示第 0 个操作按钮（停止服务）
+        val mediaStyle = androidx.media.app.NotificationCompat.MediaStyle()
+            .setShowActionsInCompactView(0)
+
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("CLIProxy API 服务正在运行")
             .setContentText("监听地址: http://$host:$port")
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(com.cliproxy.R.drawable.ic_proxy_running)
             .setContentIntent(mainPendingIntent)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "停止服务", stopPendingIntent)
+            .addAction(com.cliproxy.R.drawable.ic_stop, "停止服务", stopPendingIntent)
+            .setStyle(mediaStyle)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOngoing(true)
             .build()
 
@@ -121,9 +126,11 @@ class CLIProxyForegroundService : Service() {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "CLIProxy 本地服务",
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = "CLIProxy API 本地前台运行通知"
+                setShowBadge(false)
+                lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
             }
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)

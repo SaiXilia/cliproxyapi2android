@@ -38,6 +38,11 @@
                 android:value="Local AI reverse proxy and protocol translator" />
         </service>
 
+        <receiver
+            android:name=".service.StopReceiver"
+            android:exported="false"
+            android:process=":proxy" />
+
     </application>
 
 </manifest>
