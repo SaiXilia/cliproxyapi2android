@@ -111,6 +111,42 @@ func ensureInitialConfigFile(cfgPath, host string, port int, authDir string) err
 	return os.Rename(tmpPath, cfgPath)
 }
 
+func ensureInitialManagementAsset(staticDir string) {
+	mgmtPath := filepath.Join(staticDir, "management.html")
+	if _, err := os.Stat(mgmtPath); err == nil {
+		return // 静态页面已存在（无论是之前内置的还是远端热拉取的）
+	}
+	_ = os.MkdirAll(staticDir, 0700)
+	fallbackHTML := `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLIProxy API 控制台 (离线就绪)</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 24px; }
+        .card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; max-width: 600px; margin: 0 auto; }
+        h1 { font-size: 20px; margin-top: 0; color: #38bdf8; }
+        p { color: #94a3b8; font-size: 14px; line-height: 1.6; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; background: #065f46; color: #34d399; }
+        .endpoint { background: #0f172a; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 13px; color: #e2e8f0; margin: 12px 0; word-break: break-all; }
+        button { background: #2563eb; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>CLIProxy API 控制台</h1>
+        <p><span class="badge">本地代理运行正常</span></p>
+        <p>服务已成功启动并就绪。当手机接入互联网时，后台更新器将自动从官方远端同步最新版完整管理控制台单页。</p>
+        <div class="endpoint">健康检查端点: <a href="/healthz" style="color:#38bdf8;">/healthz</a></div>
+        <div class="endpoint">聚合模型列表: <a href="/v1/models" style="color:#38bdf8;">/v1/models</a></div>
+        <button onclick="location.reload()">刷新页面</button>
+    </div>
+</body>
+</html>`
+	_ = os.WriteFile(mgmtPath, []byte(fallbackHTML), 0644)
+}
+
 //export StartServer
 // 启动移动端代理服务。返回值: 1 成功受理启动, 0 已经在运行中, -1 参数或初始化失败
 func StartServer(cConfigDir *C.char, cHost *C.char, port C.int) C.int {
@@ -161,6 +197,7 @@ func StartServer(cConfigDir *C.char, cHost *C.char, port C.int) C.int {
 		serverStatus.Store(StatusFailed)
 		return -1
 	}
+	ensureInitialManagementAsset(filepath.Join(configDir, "static"))
 
 	// 2. 加载配置对象并强制移动端策略
 	cfg, errLoad := config.LoadConfigOptional(cfgPath, false)
