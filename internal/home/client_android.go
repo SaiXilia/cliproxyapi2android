@@ -51,6 +51,11 @@ func NewAmbiguousDispatchError(err error) error {
 	return &DispatchError{Err: err, Ambiguous: true}
 }
 
+func IsAmbiguousDispatchError(err error) bool {
+	var dispatchErr *DispatchError
+	return errors.As(err, &dispatchErr) && dispatchErr != nil && dispatchErr.Ambiguous
+}
+
 type PluginTask struct {
 	ID             uint      `json:"id"`
 	Operation      string    `json:"operation"`
