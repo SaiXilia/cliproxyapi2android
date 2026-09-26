@@ -30,6 +30,7 @@ auths/*
 
 # Documentation
 docs/*
+!docs/android/**
 AGENTS.md
 CLAUDE.md
 GEMINI.md
