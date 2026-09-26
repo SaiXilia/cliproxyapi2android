@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CLIProxyAPI Android Build Lock",
+  "generatedAt": "2026-09-26T16:53:00+08:00",
+  "upstream": {
+    "repository": "https://github.com/router-for-me/CLIProxyAPI.git",
+    "commit": "ed980be34b9981735eaa16941956b1e8d9abfb7c",
+    "commitDate": "2026-09-26T13:47:25+08:00",
+    "commitSubject": "fix(auth): preserve resolved model capabilities and configuration update support",
+    "module": "github.com/router-for-me/CLIProxyAPI/v7"
+  },
+  "toolchain": {
+    "go": "1.27.0",
+    "goMinRequiredByMod": "1.26.0",
+    "ndk": "29.0.14206865",
+    "clang": "21.0.0 (r563880c)",
+    "hostOs": "windows-amd64",
+    "cgo": true
+  },
+  "androidTarget": {
+    "minSdk": 26,
+    "targetSdk": 36,
+    "compileSdk": 36,
+    "ndkTargetApi": 26,
+    "primaryAbi": "arm64-v8a",
+    "secondaryAbi": "x86_64",
+    "pageSizeAlignment": 16384
+  },
+  "baselineMetrics": {
+    "unprunedDesktopBinarySize": "89MB",
+    "measuredOn": "windows-amd64",
+    "timestamp": "2026-09-26T16:51:00+08:00"
+  },
+  "prunedComponents": [
+    {
+      "name": "enterprise-storage",
+      "packages": ["internal/store"],
+      "dependencies": [
+        "github.com/jackc/pgx/v5",
+        "github.com/go-git/go-git/v6",
+        "github.com/minio/minio-go/v7"
+      ]
+    },
+    {
+      "name": "terminal-tui",
+      "packages": ["internal/tui"],
+      "dependencies": [
+        "github.com/charmbracelet/bubbletea",
+        "github.com/charmbracelet/lipgloss",
+        "github.com/charmbracelet/bubbles",
+        "github.com/atotto/clipboard"
+      ]
+    },
+    {
+      "name": "desktop-browser",
+      "packages": ["internal/browser"],
+      "dependencies": [
+        "github.com/skratchdot/open-golang"
+      ]
+    },
+    {
+      "name": "lan-discovery",
+      "packages": ["internal/discovery"],
+      "dependencies": [
+        "github.com/libp2p/zeroconf/v2",
+        "github.com/miekg/dns"
+      ]
+    },
+    {
+      "name": "distributed-home",
+      "packages": ["internal/home"],
+      "dependencies": [
+        "github.com/redis/go-redis/v9"
+      ]
+    },
+    {
+      "name": "webrtc-media",
+      "packages": ["internal/client/codex/live"],
+      "dependencies": [
+        "github.com/pion/webrtc/v4",
+        "github.com/pion/ice/v4",
+        "github.com/pion/sdp/v3",
+        "github.com/pion/stun/v3",
+        "github.com/pion/interceptor",
+        "github.com/pion/rtp",
+        "github.com/pion/dtls/v3"
+      ]
+    }
+  ]
+}

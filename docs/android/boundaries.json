@@ -1,0 +1,167 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CLIProxyAPI Android Boundaries Specification",
+  "version": "1.0",
+  "boundaries": [
+    {
+      "id": "store",
+      "name": "Enterprise Storage",
+      "description": "Prunes Postgres, Git, and S3 remote stores, replacing them with typed stubs returning ErrDisabled.",
+      "originalFiles": [
+        "internal/store/postgresstore.go",
+        "internal/store/postgres_cooldown_store.go",
+        "internal/store/gitstore.go",
+        "internal/store/objectstore.go"
+      ],
+      "replacementFiles": [
+        "internal/store/store_android.go"
+      ],
+      "forbiddenDeps": [
+        "github.com/jackc/pgx/v5",
+        "github.com/go-git/go-git/v6",
+        "github.com/minio/minio-go/v7"
+      ],
+      "exportedSymbols": [
+        "PostgresStoreConfig",
+        "PostgresStore",
+        "NewPostgresStore",
+        "ObjectStoreConfig",
+        "ObjectTokenStore",
+        "NewObjectTokenStore",
+        "GitTokenStore",
+        "NewGitTokenStore"
+      ],
+      "fallbackBehavior": "Force single-node local FileTokenStore (sdk/auth/filestore.go)."
+    },
+    {
+      "id": "tui",
+      "name": "Terminal TUI",
+      "description": "Prunes Bubbletea terminal interactive UI for Android, keeping logging hooks and client stubs.",
+      "originalFiles": [
+        "internal/tui/app.go",
+        "internal/tui/auth_tab.go",
+        "internal/tui/client.go",
+        "internal/tui/config_tab.go",
+        "internal/tui/keys_tab.go",
+        "internal/tui/log_hook.go",
+        "internal/tui/logs_tab.go",
+        "internal/tui/models_tab.go",
+        "internal/tui/runtime.go",
+        "internal/tui/styles.go",
+        "internal/tui/usage_tab.go"
+      ],
+      "replacementFiles": [
+        "internal/tui/tui_android.go"
+      ],
+      "forbiddenDeps": [
+        "github.com/charmbracelet/bubbletea",
+        "github.com/charmbracelet/lipgloss",
+        "github.com/charmbracelet/bubbles",
+        "github.com/atotto/clipboard"
+      ],
+      "exportedSymbols": [
+        "LogHook",
+        "NewLogHook",
+        "Client",
+        "NewClient",
+        "Run"
+      ],
+      "fallbackBehavior": "Interactive configuration done via built-in Web management page or native Android UI."
+    },
+    {
+      "id": "browser",
+      "name": "Desktop Browser Opener",
+      "description": "Replaces desktop xdg-open/cmd.exe invocation with Android Custom Tabs JNI callback and CLI link printing.",
+      "originalFiles": [
+        "internal/browser/browser.go"
+      ],
+      "replacementFiles": [
+        "internal/browser/browser_android.go"
+      ],
+      "forbiddenDeps": [
+        "github.com/skratchdot/open-golang"
+      ],
+      "exportedSymbols": [
+        "SetURLHandler",
+        "OpenURL",
+        "IsAvailable",
+        "GetPlatformInfo"
+      ],
+      "fallbackBehavior": "Dual-track: invokes Kotlin Custom Tabs if callback registered; prints prominent authorization URL to terminal if in CLI mode."
+    },
+    {
+      "id": "discovery",
+      "name": "LAN Discovery & Advertising",
+      "description": "Replaces mDNS Zeroconf publisher and browser with no-op stubs to eliminate battery and multicast radio wakeups.",
+      "originalFiles": [
+        "internal/discovery/zeroconf.go"
+      ],
+      "replacementFiles": [
+        "internal/discovery/zeroconf_android.go"
+      ],
+      "forbiddenDeps": [
+        "github.com/libp2p/zeroconf/v2",
+        "github.com/miekg/dns"
+      ],
+      "exportedSymbols": [
+        "ZeroconfAdvertiser",
+        "NewZeroconfAdvertiser",
+        "ServiceSpec"
+      ],
+      "fallbackBehavior": "Silent no-op on Android, does not emit multicast DNS packets."
+    },
+    {
+      "id": "home",
+      "name": "Distributed Redis Coordination",
+      "description": "Prunes Redis cluster client; guarantees home.Current() remains nil on Android to trigger pure in-memory fallback.",
+      "originalFiles": [
+        "internal/home/client.go"
+      ],
+      "replacementFiles": [
+        "internal/home/client_android.go"
+      ],
+      "forbiddenDeps": [
+        "github.com/redis/go-redis/v9"
+      ],
+      "exportedSymbols": [
+        "ErrDisabled",
+        "ErrNotConnected",
+        "PluginTask",
+        "KVSetOptions",
+        "Client",
+        "New"
+      ],
+      "fallbackBehavior": "All 54 call sites fall back seamlessly to single-node local in-memory cache."
+    },
+    {
+      "id": "webrtc",
+      "name": "WebRTC Media Pipeline",
+      "description": "Prunes Pion WebRTC stack for Codex Realtime voice, self-containing all necessary types for live.go without pulling media dependencies.",
+      "originalFiles": [
+        "internal/client/codex/live/media.go",
+        "internal/client/codex/live/tcp_proxy.go"
+      ],
+      "replacementFiles": [
+        "internal/client/codex/live/media_android.go",
+        "internal/client/codex/live/tcp_proxy_android.go"
+      ],
+      "forbiddenDeps": [
+        "github.com/pion/webrtc/v4",
+        "github.com/pion/ice/v4",
+        "github.com/pion/sdp/v3",
+        "github.com/pion/stun/v3",
+        "github.com/pion/interceptor",
+        "github.com/pion/rtp",
+        "github.com/pion/dtls/v3"
+      ],
+      "exportedSymbols": [
+        "newPionMediaRelayWithLimiter",
+        "mediaRelaySession",
+        "mediaRelayFactory",
+        "mediaSessionRoute",
+        "mediaSessionLimiter"
+      ],
+      "fallbackBehavior": "Realtime audio requests return clear unsupported error; standard text/image SSE/WebSocket unaffected."
+    }
+  ]
+}
