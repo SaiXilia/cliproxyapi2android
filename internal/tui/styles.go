@@ -1,3 +1,5 @@
+//go:build !android
+
 // Package tui provides a terminal-based management interface for CLIProxyAPI.
 package tui
 
