@@ -71,23 +71,41 @@
                 </LinearLayout>
 
                 <TextView
-                    android:id="@+id/tvEndpoint"
+                    android:id="@+id/tvEndpointLocal"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="本机地址: http://127.0.0.1:8317"
+                    android:text="本机固定: http://127.0.0.1:8317/v1"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="#34D399"
+                    android:layout_marginTop="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="（推荐本机软件使用：无论切 5G 还是换 Wi-Fi 永不变动）"
+                    android:textSize="11sp"
+                    android:textColor="#94A3B8"
+                    android:layout_marginTop="2dp" />
+
+                <TextView
+                    android:id="@+id/tvEndpointLan"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="局域网共享: http://192.168.101.4:8317/v1"
                     android:textSize="13sp"
                     android:textStyle="bold"
                     android:textColor="#38BDF8"
                     android:layout_marginTop="8dp" />
 
                 <TextView
-                    android:id="@+id/tvTipVpn"
+                    android:id="@+id/tvTipLan"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="（已绑定全网卡 0.0.0.0，开 VPN 也能用本机局域网 IP 直连）"
+                    android:text="（供同一局域网下的电脑、平板等跨设备使用）"
                     android:textSize="11sp"
-                    android:textColor="#10B981"
-                    android:layout_marginTop="3dp" />
+                    android:textColor="#94A3B8"
+                    android:layout_marginTop="2dp" />
 
                 <TextView
                     android:id="@+id/tvDataDir"
@@ -98,14 +116,34 @@
                     android:textColor="#64748B"
                     android:layout_marginTop="6dp" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnCopyApiUrl"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="一键复制 API 客户端地址 (/v1)"
-                    android:textSize="12sp"
-                    style="@style/Widget.Material3.Button.TonalButton"
-                    android:layout_marginTop="10dp" />
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="10dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCopyLocalhost"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_weight="1"
+                        android:text="复制本机地址 (127.0.0.1)"
+                        android:textSize="11sp"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_marginEnd="6dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCopyLan"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_weight="1"
+                        android:text="复制局域网地址 (Wi-Fi)"
+                        android:textSize="11sp"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        app:strokeColor="#38BDF8"
+                        android:textColor="#38BDF8"
+                        android:layout_marginStart="6dp" />
+                </LinearLayout>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -258,7 +296,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="网络兼容说明"
+                    android:text="网络与 VPN (NekoBox) 兼容指南"
                     android:textSize="13sp"
                     android:textStyle="bold"
                     android:textColor="#F8FAFC"
@@ -267,7 +305,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="• 已自动读取本机 Wi-Fi/局域网 IP，服务绑定 0.0.0.0\n• 客户端使用局域网 IP 直连，避免 VPN 拦截 127.0.0.1 回环\n• 局域网内其他设备 (如电脑、平板) 也可直接通过该地址使用\n• 状态栏常驻通知卡片自带 [停止服务] 快捷控制"
+                    android:text="• 本机软件推荐使用 127.0.0.1:8317，地址永久固定，无论切 5G 还是换 Wi-Fi 永不需要修改。\n• 若开启 NekoBox 等 VPN：请在 NekoBox 的【分应用代理】中将客户端软件（如 MoonEdit/Chatbox）设为【绕过代理（直连）】；或在【路由规则】中添加 127.0.0.0/8 直连规则。\n• 服务已绑定 0.0.0.0，局域网内的电脑、平板也可直接通过局域网 IP 直连。\n• 状态栏常驻通知卡片自带 [停止服务] 快捷控制。"
                     android:textSize="12sp"
                     android:lineSpacingExtra="4dp"
                     android:textColor="#94A3B8" />

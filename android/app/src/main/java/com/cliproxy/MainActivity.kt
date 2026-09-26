@@ -36,13 +36,14 @@ import java.util.Collections
 class MainActivity : AppCompatActivity() {
 
     private lateinit var tvStatus: TextView
-    private lateinit var tvEndpoint: TextView
-    private lateinit var tvTipVpn: TextView
+    private lateinit var tvEndpointLocal: TextView
+    private lateinit var tvEndpointLan: TextView
     private lateinit var tvDataDir: TextView
     private lateinit var statusIndicator: View
     private lateinit var btnToggle: MaterialButton
     private lateinit var btnOpenWeb: MaterialButton
-    private lateinit var btnCopyApiUrl: MaterialButton
+    private lateinit var btnCopyLocalhost: MaterialButton
+    private lateinit var btnCopyLan: MaterialButton
     private lateinit var tvApiKeyStatus: TextView
     private lateinit var tvApiKeyValue: TextView
     private lateinit var btnCopyKey: MaterialButton
@@ -63,13 +64,14 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         tvStatus = findViewById(R.id.tvStatus)
-        tvEndpoint = findViewById(R.id.tvEndpoint)
-        tvTipVpn = findViewById(R.id.tvTipVpn)
+        tvEndpointLocal = findViewById(R.id.tvEndpointLocal)
+        tvEndpointLan = findViewById(R.id.tvEndpointLan)
         tvDataDir = findViewById(R.id.tvDataDir)
         statusIndicator = findViewById(R.id.statusIndicator)
         btnToggle = findViewById(R.id.btnToggle)
         btnOpenWeb = findViewById(R.id.btnOpenWeb)
-        btnCopyApiUrl = findViewById(R.id.btnCopyApiUrl)
+        btnCopyLocalhost = findViewById(R.id.btnCopyLocalhost)
+        btnCopyLan = findViewById(R.id.btnCopyLan)
         tvApiKeyStatus = findViewById(R.id.tvApiKeyStatus)
         tvApiKeyValue = findViewById(R.id.tvApiKeyValue)
         btnCopyKey = findViewById(R.id.btnCopyKey)
@@ -91,10 +93,16 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        btnCopyApiUrl.setOnClickListener {
+        btnCopyLocalhost.setOnClickListener {
+            val apiUrl = "http://127.0.0.1:8317/v1"
+            copyToClipboard("CLIProxy 本机地址", apiUrl)
+            Toast.makeText(this, "本机固定地址已复制 (永不失效): $apiUrl", Toast.LENGTH_SHORT).show()
+        }
+
+        btnCopyLan.setOnClickListener {
             val apiUrl = "http://$localIp:8317/v1"
-            copyToClipboard("CLIProxy API URL", apiUrl)
-            Toast.makeText(this, "API 客户端地址已复制: $apiUrl", Toast.LENGTH_SHORT).show()
+            copyToClipboard("CLIProxy 局域网地址", apiUrl)
+            Toast.makeText(this, "局域网跨设备地址已复制: $apiUrl", Toast.LENGTH_SHORT).show()
         }
 
         btnOpenWeb.setOnClickListener {
@@ -114,19 +122,36 @@ class MainActivity : AppCompatActivity() {
 
         btnTestModels.setOnClickListener {
             val url = if (currentApiKey.isNullOrBlank()) {
-                "http://$localIp:8317/v1/models"
+                "http://127.0.0.1:8317/v1/models"
             } else {
-                "http://$localIp:8317/v1/models?key=$currentApiKey"
+                "http://127.0.0.1:8317/v1/models?key=$currentApiKey"
             }
             openUrlInBrowser(url)
         }
 
         btnTestHealthz.setOnClickListener {
-            openUrlInBrowser("http://$localIp:8317/healthz")
+            openUrlInBrowser("http://127.0.0.1:8317/healthz")
         }
 
         checkNotificationPermission()
         startStatusChecker()
+        handleServiceIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleServiceIntent(intent)
+    }
+
+    private fun handleServiceIntent(intent: Intent?) {
+        if (intent == null) return
+        val configDir = "${noBackupFilesDir.absolutePath}/cliproxy"
+        if (intent.getBooleanExtra("start_service", false)) {
+            startProxy(configDir)
+        } else if (intent.getBooleanExtra("stop_service", false)) {
+            stopProxy()
+        }
     }
 
     override fun onResume() {
@@ -136,12 +161,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateLocalIp() {
         localIp = detectLocalIpAddress()
-        tvEndpoint.text = "服务地址: http://$localIp:8317"
-        if (localIp != "127.0.0.1") {
-            tvTipVpn.text = "（已绑定全网卡 0.0.0.0，局域网直连可完美避开 VPN 拦截）"
-        } else {
-            tvTipVpn.text = "（已绑定 0.0.0.0，连接 Wi-Fi 后可显示真实局域网 IP）"
-        }
+        tvEndpointLocal.text = "本机固定: http://127.0.0.1:8317/v1"
+        tvEndpointLan.text = "局域网共享: http://$localIp:8317/v1"
     }
 
     private fun detectLocalIpAddress(): String {
@@ -329,7 +350,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openManagementPage() {
-        openUrlInBrowser("http://$localIp:8317/management.html")
+        openUrlInBrowser("http://127.0.0.1:8317/management.html")
     }
 
     private fun startStatusChecker() {
@@ -370,14 +391,16 @@ class MainActivity : AppCompatActivity() {
             btnOpenWeb.isEnabled = false
             btnTestModels.isEnabled = false
             btnTestHealthz.isEnabled = false
-            btnCopyApiUrl.isEnabled = false
+            btnCopyLocalhost.isEnabled = false
+            btnCopyLan.isEnabled = false
             return
         }
 
         btnToggle.isEnabled = true
-        btnCopyApiUrl.isEnabled = true
+        btnCopyLocalhost.isEnabled = true
+        btnCopyLan.isEnabled = true
         if (running) {
-            tvStatus.text = "运行中 ($localIp:8317)"
+            tvStatus.text = "运行中 (8317 端口已就绪)"
             statusIndicator.setBackgroundColor(Color.parseColor("#10B981")) // 绿色
             btnToggle.text = "停止服务"
             btnToggle.setBackgroundColor(Color.parseColor("#EF4444")) // 红色
