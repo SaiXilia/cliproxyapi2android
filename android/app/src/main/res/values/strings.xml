@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">CLIProxy API</string>
+    <string name="service_notification_title">CLIProxy API 本地代理服务</string>
+    <string name="service_notification_running">服务正在运行中: http://127.0.0.1:8317</string>
+    <string name="action_stop">停止服务</string>
+    <string name="action_start">启动服务</string>
+    <string name="action_open_web">打开管理控制台 (Web)</string>
+    <string name="status_running">运行中 (127.0.0.1:8317)</string>
+    <string name="status_stopped">已停止</string>
+    <string name="status_starting">正在启动...</string>
+    <string name="status_stopping">正在停止...</string>
+</resources>
