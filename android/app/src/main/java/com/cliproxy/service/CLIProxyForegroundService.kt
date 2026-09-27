@@ -10,6 +10,7 @@ import android.content.pm.ServiceInfo
 import android.net.Uri
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import com.cliproxy.CLIProxy
@@ -36,6 +37,7 @@ class CLIProxyForegroundService : Service() {
     }
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -55,6 +57,7 @@ class CLIProxyForegroundService : Service() {
         val host = intent?.getStringExtra(EXTRA_HOST) ?: "0.0.0.0"
         val port = intent?.getIntExtra(EXTRA_PORT, 8317) ?: 8317
 
+        acquireWakeLock()
         startForegroundNotification(host, port)
 
         serviceScope.launch {
@@ -80,7 +83,7 @@ class CLIProxyForegroundService : Service() {
             }
         }
 
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
     private fun startForegroundNotification(host: String, port: Int) {
@@ -137,7 +140,33 @@ class CLIProxyForegroundService : Service() {
         }
     }
 
+    private fun acquireWakeLock() {
+        if (wakeLock == null) {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+            wakeLock = powerManager.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK,
+                "CLIProxy::ProxyWakeLock"
+            ).apply {
+                setReferenceCounted(false)
+                acquire()
+            }
+        }
+    }
+
+    private fun releaseWakeLock() {
+        try {
+            if (wakeLock?.isHeld == true) {
+                wakeLock?.release()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            wakeLock = null
+        }
+    }
+
     private fun stopProxyService() {
+        releaseWakeLock()
         serviceScope.cancel()
         CLIProxy.stopServer()
         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -148,6 +177,7 @@ class CLIProxyForegroundService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        releaseWakeLock()
         serviceScope.cancel()
         CLIProxy.stopServer()
     }
