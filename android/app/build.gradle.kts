@@ -6,8 +6,8 @@ plugins {
 fun quotedBuildConfigValue(value: String): String =
     "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
-val appVersionCodeValue = providers.gradleProperty("appVersionCode").orNull?.toIntOrNull() ?: 2
-val appVersionNameValue = providers.gradleProperty("appVersionName").orNull ?: "1.1.0"
+val appVersionCodeValue = providers.gradleProperty("appVersionCode").orNull?.toIntOrNull() ?: 3
+val appVersionNameValue = providers.gradleProperty("appVersionName").orNull ?: "1.1.1"
 val coreVersionValue = providers.gradleProperty("coreVersion").orNull ?: "8.0.3"
 
 val releaseStoreFile = System.getenv("CLIPROXY_SIGNING_STORE_FILE")

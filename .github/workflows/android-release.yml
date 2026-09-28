@@ -4,13 +4,13 @@ on:
   workflow_call:
     inputs:
       source_ref:
-        description: 'Integrated Android release tag, for example android-core-v8.0.3'
+        description: 'Integrated release tag, for example android-app-v1.1.1'
         required: true
         type: string
   workflow_dispatch:
     inputs:
       source_ref:
-        description: 'Integrated Android release tag, for example android-core-v8.0.3'
+        description: 'Integrated release tag, for example android-app-v1.1.1'
         required: true
         type: string
 
@@ -39,19 +39,41 @@ jobs:
           SOURCE_REF: ${{ inputs.source_ref }}
         run: |
           set -euo pipefail
+          integrated_tag="$(tr -d '[:space:]' < .github/upstream-version)"
+          if [[ ! "$integrated_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Unsupported integrated core version: $integrated_tag" >&2
+            exit 1
+          fi
+          core_tag="$integrated_tag"
+          core_version="${core_tag#v}"
+
+          app_version=""
+          if [[ -f android/gradle.properties ]]; then
+            app_version="$(sed -n 's/^appVersionName=//p' android/gradle.properties | tail -n 1 | tr -d '[:space:]')"
+          fi
+          if [[ -z "$app_version" ]]; then
+            app_version="1.1.0"
+          fi
+          if [[ ! "$app_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Unsupported Android app version: $app_version" >&2
+            exit 1
+          fi
+
           if [[ "$SOURCE_REF" =~ ^android-core-(v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?)$ ]]; then
-            core_tag="${BASH_REMATCH[1]}"
+            if [[ "${BASH_REMATCH[1]}" != "$core_tag" ]]; then
+              echo "Release tag $SOURCE_REF does not match integrated core $core_tag" >&2
+              exit 1
+            fi
+          elif [[ "$SOURCE_REF" =~ ^android-app-v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            if [[ "${BASH_REMATCH[1]}" != "$app_version" ]]; then
+              echo "Release tag $SOURCE_REF does not match Android app version $app_version" >&2
+              exit 1
+            fi
           else
             echo "Unsupported Android release tag: $SOURCE_REF" >&2
             exit 1
           fi
           release_tag="$SOURCE_REF"
-          core_version="${core_tag#v}"
-          integrated_tag="$(tr -d '[:space:]' < .github/upstream-version)"
-          if [[ "$integrated_tag" != "$core_tag" ]]; then
-            echo "Release tag $release_tag expects $core_tag, but the source contains $integrated_tag" >&2
-            exit 1
-          fi
           if ! git show-ref --verify --quiet "refs/tags/$release_tag"; then
             echo "Release tag does not exist in the repository: $release_tag" >&2
             exit 1
@@ -67,8 +89,9 @@ jobs:
             echo "Android version code is out of range: $version_code" >&2
             exit 1
           fi
-          version_name="1.1.0-core.$core_version"
+          version_name="$app_version-core.$core_version"
           echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
+          echo "app_version=$app_version" >> "$GITHUB_OUTPUT"
           echo "core_version=$core_version" >> "$GITHUB_OUTPUT"
           echo "version_code=$version_code" >> "$GITHUB_OUTPUT"
           echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
@@ -166,6 +189,7 @@ jobs:
       - name: Prepare update manifest and checksums
         env:
           RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
+          APP_VERSION: ${{ steps.version.outputs.app_version }}
           VERSION_CODE: ${{ steps.version.outputs.version_code }}
           VERSION_NAME: ${{ steps.version.outputs.version_name }}
           CORE_VERSION: ${{ steps.version.outputs.core_version }}
@@ -191,7 +215,10 @@ jobs:
                   f"{os.environ['RELEASE_TAG']}/{os.environ['APK_NAME']}"
               ),
               "sha256": os.environ["APK_SHA256"],
-              "release_notes": f"CLIProxyAPI core {os.environ['CORE_VERSION']}",
+              "release_notes": (
+                  f"Android app {os.environ['APP_VERSION']}; "
+                  f"CLIProxyAPI core {os.environ['CORE_VERSION']}"
+              ),
           }
           with open("release-assets/update.json", "w", encoding="utf-8") as output:
               json.dump(manifest, output, ensure_ascii=False, indent=2)
