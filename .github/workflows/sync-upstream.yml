@@ -40,19 +40,20 @@ jobs:
         id: merge
         run: |
           git checkout main
-          if git merge upstream/main -m "chore(upstream): auto-merge upstream changes"; then
+          if git merge upstream/main -X ours -m "chore(upstream): auto-merge upstream changes"; then
             echo "merged=true" >> $GITHUB_OUTPUT
-            # 自动清洗上游广告与赞助信息，保持仓库纯净
+            # 清洗上游广告、残留桌面配置与模板
             python3 scripts/android/clean_sponsors.py || true
             rm -f .github/workflows/agents-md-guard.yml \
                   .github/workflows/auto-retarget-main-pr-to-dev.yml \
                   .github/workflows/docker-image.yml \
                   .github/workflows/pr-path-guard.yml \
                   .github/workflows/pr-test-build.yml \
-                  .github/workflows/release.yaml || true
+                  .github/workflows/release.yaml \
+                  README_JA.md || true
             if ! git diff --quiet || [ -n "$(git status --porcelain)" ]; then
               git add -A
-              git commit -m "chore: purge upstream sponsor ads and desktop workflows" || true
+              git commit -m "chore: purge upstream ads and desktop workflows" || true
             fi
             git push origin main
           else

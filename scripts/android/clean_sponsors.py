@@ -1,28 +1,9 @@
 #!/usr/bin/env python3
 """
-Strip third-party sponsor advertisement sections and funding files.
+Clean third-party sponsor assets and funding configurations.
 """
 import os
 import glob
-
-def clean_readmes():
-    sections = [
-        ('README.md', '## Sponsor', '## Overview'),
-        ('README_CN.md', '## 赞助商', '## 功能特性'),
-        ('README_JA.md', '## スポンサー', '## 概要')
-    ]
-    for fname, start_kw, end_kw in sections:
-        if not os.path.exists(fname):
-            continue
-        with open(fname, 'r', encoding='utf-8') as f:
-            content = f.read()
-        start_idx = content.find(start_kw)
-        end_idx = content.find(end_kw)
-        if start_idx != -1 and end_idx != -1:
-            new_content = content[:start_idx].rstrip() + '\n\n' + content[end_idx:]
-            with open(fname, 'w', encoding='utf-8', newline='\n') as f:
-                f.write(new_content)
-            print(f"Cleaned sponsor section from {fname}")
 
 def clean_assets():
     # Remove all sponsor image files in assets/ root (keep assets/logo/)
@@ -39,6 +20,15 @@ def clean_assets():
         os.remove(funding)
         print("Removed .github/FUNDING.yml")
 
+    issue_template = os.path.join('.github', 'ISSUE_TEMPLATE')
+    if os.path.exists(issue_template):
+        import shutil
+        shutil.rmtree(issue_template, ignore_errors=True)
+        print("Removed .github/ISSUE_TEMPLATE")
+
+    # Clean leftover Japanese readme if recreated by upstream merge
+    if os.path.exists('README_JA.md'):
+        os.remove('README_JA.md')
+
 if __name__ == '__main__':
-    clean_readmes()
     clean_assets()
