@@ -1,0 +1,45 @@
+name: Sync Upstream & Rebuild Core
+
+on:
+  schedule:
+    # 每天 UTC 03:00 (北京时间 11:00) 自动检查上游更新
+    - cron: '0 3 * * *'
+  workflow_dispatch: # 支持在 GitHub 网页手动点击按钮立即同步
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    name: Sync Upstream CLIProxyAPI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add and fetch upstream
+        run: |
+          git remote add upstream https://github.com/router-for-me/CLIProxyAPI.git || true
+          git fetch upstream main
+
+      - name: Merge upstream changes
+        id: merge
+        run: |
+          git checkout main
+          if git merge upstream/main -m "chore(upstream): auto-merge upstream changes"; then
+            echo "merged=true" >> $GITHUB_OUTPUT
+            git push origin main
+          else
+            echo "Merge conflict detected or already up to date"
+            git merge --abort || true
+            echo "merged=false" >> $GITHUB_OUTPUT
+          fi

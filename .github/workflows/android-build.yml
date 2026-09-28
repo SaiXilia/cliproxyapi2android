@@ -1,0 +1,96 @@
+name: Build Android APK and Core
+
+on:
+  push:
+    branches:
+      - main
+      - android-migration
+    paths:
+      - 'android/**'
+      - 'cmd/**'
+      - 'internal/**'
+      - 'sdk/**'
+      - 'scripts/android/**'
+      - '.github/workflows/android-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Android APK & Native Core
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.x'
+          cache: true
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Set up Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27c
+          add-to-path: true
+
+      - name: Compile Native Core (libcliproxy.so & CLI)
+        run: |
+          mkdir -p android/app/src/main/jniLibs/arm64-v8a
+          mkdir -p android/app/src/main/jniLibs/x86_64
+          mkdir -p dist/android/arm64-v8a
+          mkdir -p dist/android/x86_64
+
+          TOOLCHAIN="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64"
+
+          echo "Compiling arm64-v8a..."
+          CGO_ENABLED=1 GOOS=android GOARCH=arm64 \
+          CC="$TOOLCHAIN/bin/aarch64-linux-android26-clang" \
+          CXX="$TOOLCHAIN/bin/aarch64-linux-android26-clang++" \
+          go build -buildmode=c-shared -trimpath \
+            -ldflags="-s -w -extldflags '-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384'" \
+            -o android/app/src/main/jniLibs/arm64-v8a/libcliproxy.so ./cmd/mobile
+          rm -f android/app/src/main/jniLibs/arm64-v8a/libcliproxy.h
+
+          CGO_ENABLED=1 GOOS=android GOARCH=arm64 \
+          CC="$TOOLCHAIN/bin/aarch64-linux-android26-clang" \
+          CXX="$TOOLCHAIN/bin/aarch64-linux-android26-clang++" \
+          go build -buildmode=pie -trimpath \
+            -ldflags="-s -w -extldflags '-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384'" \
+            -o dist/android/arm64-v8a/cli-proxy-api ./cmd/server
+
+          echo "Compiling x86_64..."
+          CGO_ENABLED=1 GOOS=android GOARCH=amd64 \
+          CC="$TOOLCHAIN/bin/x86_64-linux-android26-clang" \
+          CXX="$TOOLCHAIN/bin/x86_64-linux-android26-clang++" \
+          go build -buildmode=c-shared -trimpath \
+            -ldflags="-s -w -extldflags '-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384'" \
+            -o android/app/src/main/jniLibs/x86_64/libcliproxy.so ./cmd/mobile
+          rm -f android/app/src/main/jniLibs/x86_64/libcliproxy.h
+
+      - name: Build Android APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK & CLI Binary Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cliproxy-android-artifacts
+          path: |
+            android/app/build/outputs/apk/debug/*.apk
+            dist/android/arm64-v8a/cli-proxy-api
