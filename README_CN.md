@@ -2,7 +2,7 @@
 
 [English](README.md) | 中文说明
 
-CLIProxyAPI Android 是基于 [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) 移植的高性能移动端 AI 本地代理网关。它在 Android 设备上本地运行，为手机内部客户端（如 MoonEdit、Chatbox 等）提供兼容 OpenAI、Claude、Gemini、Codex 的全协议转换、多账号轮询与思维链（Thinking）处理服务。
+CLIProxyAPI Android 是基于 [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) 移植的高性能移动端 AI 本地代理网关。它在 Android 设备上本地运行，为手机内部客户端（如 Chatbox 等）提供兼容 OpenAI、Claude、Gemini、Codex 的全协议转换、多账号轮询与思维链（Thinking）处理服务。
 
 ---
 

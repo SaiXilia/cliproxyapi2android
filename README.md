@@ -2,7 +2,7 @@
 
 English | [中文说明](README_CN.md)
 
-CLIProxyAPI Android is a high-performance local AI proxy gateway ported from [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI). Running locally on Android devices, it provides OpenAI, Claude, Gemini, and Codex compatible API translation, multi-account round-robin scheduling, and extended thinking support for local clients (such as MoonEdit, Chatbox, etc.).
+CLIProxyAPI Android is a high-performance local AI proxy gateway ported from [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI). Running locally on Android devices, it provides OpenAI, Claude, Gemini, and Codex compatible API translation, multi-account round-robin scheduling, and extended thinking support for local clients (such as Chatbox, etc.).
 
 ---
 
