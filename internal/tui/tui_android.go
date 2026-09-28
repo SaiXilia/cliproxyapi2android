@@ -42,3 +42,8 @@ func (c *Client) GetConfigYAML() (string, error) {
 func Run(_ int, _ string, _ *LogHook, _ io.Writer) error {
 	return errTUIDisabledOnAndroid
 }
+
+// RunWithBaseURL stub for Android
+func RunWithBaseURL(_ string, _ string, _ *LogHook, _ io.Writer) error {
+	return errTUIDisabledOnAndroid
+}
