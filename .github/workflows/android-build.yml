@@ -4,18 +4,20 @@ on:
   push:
     branches:
       - main
-      - android-migration
     paths:
       - 'android/**'
       - 'cmd/**'
       - 'internal/**'
       - 'sdk/**'
       - 'scripts/android/**'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/upstream-version'
       - '.github/workflows/android-build.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
