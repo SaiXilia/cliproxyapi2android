@@ -11,7 +11,7 @@ CLIProxyAPI Android is a high-performance local AI proxy gateway ported from [CL
 - **Dual-Process Isolation**: The Android UI process and background proxy service (`:proxy` standalone process) are physically separated, shielding the UI from any Go runtime panics.
 - **Full Interface Binding & VPN Compatibility**: Listens on `0.0.0.0`, allowing local clients to connect directly via `127.0.0.1:8317` without VPN loopback interception, or share across devices via Wi-Fi LAN IP.
 - **Anti-Freeze & Anti-Sleep Resilience**: Integrates hardware-level `PARTIAL_WAKE_LOCK` and `START_STICKY` service recovery to prevent system cgroup freezer (tombstoning) mechanisms from freezing network proxy sockets.
-- **MediaStyle Notification Controls**: Follows Android MediaStyle compact notification standards, featuring a persistent status bar notification with an instant "Stop Service" button.
+- **Persistent Lightweight Notification**: Clean status bar notification indicating service running status while preventing system suspension.
 - **16KB Memory Page Alignment**: Both the native C-Shared library (`libcliproxy.so`) and standalone binaries strictly adhere to 16KB page alignment, ensuring full compatibility with Android 14 / 15+ kernels.
 - **Automated Cloud CI/CD**: Built-in GitHub Actions workflows automatically sync with upstream core changes daily and build release-ready APK packages.
 

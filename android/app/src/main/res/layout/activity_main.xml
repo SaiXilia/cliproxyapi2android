@@ -20,15 +20,8 @@
             android:textSize="26sp"
             android:textStyle="bold"
             android:textColor="#F8FAFC"
-            android:layout_marginTop="8dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="本地大模型全协议转换代理 · 移动端瘦身版"
-            android:textSize="13sp"
-            android:textColor="#94A3B8"
-            android:layout_marginBottom="20dp" />
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp" />
 
         <!-- 状态卡片 -->
         <com.google.android.material.card.MaterialCardView
@@ -74,38 +67,21 @@
                     android:id="@+id/tvEndpointLocal"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="本机固定: http://127.0.0.1:8317/v1"
+                    android:text="本机地址: http://127.0.0.1:8317/v1"
                     android:textSize="13sp"
                     android:textStyle="bold"
                     android:textColor="#34D399"
-                    android:layout_marginTop="8dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="（推荐本机软件使用：无论切 5G 还是换 Wi-Fi 永不变动）"
-                    android:textSize="11sp"
-                    android:textColor="#94A3B8"
-                    android:layout_marginTop="2dp" />
+                    android:layout_marginTop="10dp" />
 
                 <TextView
                     android:id="@+id/tvEndpointLan"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="局域网共享: http://192.168.101.4:8317/v1"
+                    android:text="局域网地址: http://127.0.0.1:8317/v1"
                     android:textSize="13sp"
                     android:textStyle="bold"
                     android:textColor="#38BDF8"
-                    android:layout_marginTop="8dp" />
-
-                <TextView
-                    android:id="@+id/tvTipLan"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="（供同一局域网下的电脑、平板等跨设备使用）"
-                    android:textSize="11sp"
-                    android:textColor="#94A3B8"
-                    android:layout_marginTop="2dp" />
+                    android:layout_marginTop="6dp" />
 
                 <TextView
                     android:id="@+id/tvDataDir"
@@ -114,31 +90,39 @@
                     android:text="数据目录: 正在加载..."
                     android:textSize="11sp"
                     android:textColor="#64748B"
-                    android:layout_marginTop="6dp" />
+                    android:layout_marginTop="8dp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="10dp">
+                    android:layout_marginTop="12dp">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnCopyLocalhost"
                         android:layout_width="0dp"
-                        android:layout_height="42dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
                         android:layout_weight="1"
-                        android:text="复制本机地址 (127.0.0.1)"
-                        android:textSize="11sp"
+                        android:text="复制本机地址"
+                        android:textSize="12sp"
+                        android:singleLine="true"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
                         style="@style/Widget.Material3.Button.TonalButton"
                         android:layout_marginEnd="6dp" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnCopyLan"
                         android:layout_width="0dp"
-                        android:layout_height="42dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
                         android:layout_weight="1"
-                        android:text="复制局域网地址 (Wi-Fi)"
-                        android:textSize="11sp"
+                        android:text="复制局域网地址"
+                        android:textSize="12sp"
+                        android:singleLine="true"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
                         style="@style/Widget.Material3.Button.OutlinedButton"
                         app:strokeColor="#38BDF8"
                         android:textColor="#38BDF8"
@@ -176,7 +160,7 @@
                     android:id="@+id/tvApiKeyStatus"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="当前: 免密模式 (浏览器与客户端可直接访问)"
+                    android:text="当前: 免密模式"
                     android:textSize="13sp"
                     android:textColor="#34D399"
                     android:layout_marginTop="6dp" />
@@ -202,20 +186,112 @@
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnCopyKey"
                         android:layout_width="0dp"
-                        android:layout_height="42dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
                         android:layout_weight="1"
                         android:text="复制 Key"
                         android:textSize="12sp"
+                        android:singleLine="true"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
                         style="@style/Widget.Material3.Button.TonalButton"
                         android:layout_marginEnd="8dp" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnToggleAuthMode"
                         android:layout_width="0dp"
-                        android:layout_height="42dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
                         android:layout_weight="1.2"
                         android:text="切换为免密访问"
                         android:textSize="12sp"
+                        android:singleLine="true"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        app:strokeColor="#38BDF8"
+                        android:textColor="#38BDF8" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- WebUI 控制台管理密钥卡片 -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="#1E293B"
+            app:cardCornerRadius="16dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="#334155"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="WebUI 控制台管理密钥"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#F8FAFC" />
+
+                <TextView
+                    android:id="@+id/tvMgmtKeyStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="浏览器访问控制台凭证"
+                    android:textSize="13sp"
+                    android:textColor="#38BDF8"
+                    android:layout_marginTop="6dp" />
+
+                <TextView
+                    android:id="@+id/tvMgmtKeyValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="admin8317"
+                    android:textSize="12sp"
+                    android:fontFamily="monospace"
+                    android:textColor="#F8FAFC"
+                    android:background="#0F172A"
+                    android:padding="8dp"
+                    android:layout_marginTop="8dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="10dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCopyMgmtKey"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
+                        android:layout_weight="1"
+                        android:text="复制管理密钥"
+                        android:textSize="12sp"
+                        android:singleLine="true"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_marginEnd="8dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnEditMgmtKey"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
+                        android:layout_weight="1"
+                        android:text="修改管理密钥"
+                        android:textSize="12sp"
+                        android:singleLine="true"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
                         style="@style/Widget.Material3.Button.OutlinedButton"
                         app:strokeColor="#38BDF8"
                         android:textColor="#38BDF8" />
@@ -228,10 +304,13 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnToggle"
             android:layout_width="match_parent"
-            android:layout_height="54dp"
+            android:layout_height="wrap_content"
+            android:minHeight="52dp"
             android:text="启动服务"
             android:textSize="16sp"
             android:textStyle="bold"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             app:cornerRadius="12dp"
             app:backgroundTint="#2563EB"
             android:textColor="#FFFFFF"
@@ -246,10 +325,14 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTestModels"
                 android:layout_width="0dp"
-                android:layout_height="46dp"
+                android:layout_height="wrap_content"
+                android:minHeight="44dp"
                 android:layout_weight="1"
                 android:text="在浏览器查看模型"
                 android:textSize="12sp"
+                android:singleLine="true"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 app:strokeColor="#38BDF8"
                 android:textColor="#38BDF8"
@@ -258,10 +341,14 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTestHealthz"
                 android:layout_width="0dp"
-                android:layout_height="46dp"
+                android:layout_height="wrap_content"
+                android:minHeight="44dp"
                 android:layout_weight="1"
-                android:text="健康检查 (healthz)"
+                android:text="健康检查"
                 android:textSize="12sp"
+                android:singleLine="true"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 app:strokeColor="#94A3B8"
                 android:textColor="#94A3B8"
@@ -271,9 +358,13 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnOpenWeb"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:text="打开管理控制台 (Web UI)"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="打开管理控制台"
             android:textSize="14sp"
+            android:singleLine="true"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             style="@style/Widget.Material3.Button.TonalButton"
             app:cornerRadius="12dp"
             android:layout_marginBottom="16dp" />
@@ -296,7 +387,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="网络与 VPN (NekoBox) 兼容指南"
+                    android:text="网络与 VPN 兼容说明"
                     android:textSize="13sp"
                     android:textStyle="bold"
                     android:textColor="#F8FAFC"
@@ -305,7 +396,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="• 本机软件推荐使用 127.0.0.1:8317，地址永久固定，无论切 5G 还是换 Wi-Fi 永不需要修改。\n• 若开启 NekoBox 等 VPN：请在 NekoBox 的【分应用代理】中将客户端软件（如 MoonEdit/Chatbox）设为【绕过代理（直连）】；或在【路由规则】中添加 127.0.0.0/8 直连规则。\n• 服务已绑定 0.0.0.0，局域网内的电脑、平板也可直接通过局域网 IP 直连。\n• 状态栏常驻通知卡片自带 [停止服务] 快捷控制。"
+                    android:text="• 本机软件使用 127.0.0.1:8317，局域网其他设备使用局域网 IP 直连。\n• 若开启 NekoBox 等 VPN：请在【分应用代理】中将客户端软件设为【绕过代理】；或在【路由规则】中添加 127.0.0.0/8 直连规则。"
                     android:textSize="12sp"
                     android:lineSpacingExtra="4dp"
                     android:textColor="#94A3B8" />

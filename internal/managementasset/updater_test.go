@@ -119,3 +119,18 @@ func TestAutoUpdateSkipReason(t *testing.T) {
 		})
 	}
 }
+
+func TestEnsureDefaultManagementAsset(t *testing.T) {
+	tempDir := t.TempDir()
+	if err := EnsureDefaultManagementAsset(tempDir); err != nil {
+		t.Fatalf("EnsureDefaultManagementAsset() error = %v", err)
+	}
+
+	data, err := DefaultManagementHTML()
+	if err != nil {
+		t.Fatalf("DefaultManagementHTML() error = %v", err)
+	}
+	if len(data) < 100*1024 {
+		t.Fatalf("DefaultManagementHTML() length = %d, want > 100KB", len(data))
+	}
+}

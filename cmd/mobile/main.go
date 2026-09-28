@@ -76,7 +76,20 @@ func generateRandomHex(length int) string {
 	return hex.EncodeToString(b)
 }
 
-func ensureInitialConfigFile(cfgPath, host string, port int, authDir string) error {
+func getOrInitManagementKey(configDir string) string {
+	keyFile := filepath.Join(configDir, "management_key.txt")
+	if data, err := os.ReadFile(keyFile); err == nil {
+		if k := strings.TrimSpace(string(data)); k != "" {
+			return k
+		}
+	}
+
+	defaultKey := "admin8317"
+	_ = os.WriteFile(keyFile, []byte(defaultKey), 0600)
+	return defaultKey
+}
+
+func ensureInitialConfigFile(cfgPath, host string, port int, authDir string, mgmtKey string) error {
 	if _, err := os.Stat(cfgPath); err == nil {
 		return nil // 配置文件已存在，不覆盖
 	}
@@ -88,7 +101,7 @@ func ensureInitialConfigFile(cfgPath, host string, port int, authDir string) err
 		"api-keys": []string{}, // 默认免密模式，便于手机端浏览器与各类客户端开箱即用
 		"remote-management": map[string]any{
 			"allow-remote": true,
-			"secret-key":   "mgmt-" + generateRandomHex(16),
+			"secret-key":   mgmtKey,
 		},
 	}
 
@@ -111,43 +124,14 @@ func ensureInitialConfigFile(cfgPath, host string, port int, authDir string) err
 }
 
 func ensureInitialManagementAsset(staticDir string) {
-	mgmtPath := filepath.Join(staticDir, "management.html")
-	if _, err := os.Stat(mgmtPath); err == nil {
-		return // 静态页面已存在（无论是之前内置的还是远端热拉取的）
+	if err := managementasset.EnsureDefaultManagementAsset(staticDir); err != nil {
+		log.WithError(err).Warn("mobile start: failed to ensure default management asset")
 	}
-	_ = os.MkdirAll(staticDir, 0700)
-	fallbackHTML := `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CLIProxy API 控制台 (离线就绪)</title>
-    <style>
-        body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 24px; }
-        .card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; max-width: 600px; margin: 0 auto; }
-        h1 { font-size: 20px; margin-top: 0; color: #38bdf8; }
-        p { color: #94a3b8; font-size: 14px; line-height: 1.6; }
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; background: #065f46; color: #34d399; }
-        .endpoint { background: #0f172a; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 13px; color: #e2e8f0; margin: 12px 0; word-break: break-all; }
-        button { background: #2563eb; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h1>CLIProxy API 控制台</h1>
-        <p><span class="badge">本地代理运行正常</span></p>
-        <p>服务已成功启动并就绪。当手机接入互联网时，后台更新器将自动从官方远端同步最新版完整管理控制台单页。</p>
-        <div class="endpoint">健康检查端点: <a href="/healthz" style="color:#38bdf8;">/healthz</a></div>
-        <div class="endpoint">聚合模型列表: <a href="/v1/models" style="color:#38bdf8;">/v1/models</a></div>
-        <button onclick="location.reload()">刷新页面</button>
-    </div>
-</body>
-</html>`
-	_ = os.WriteFile(mgmtPath, []byte(fallbackHTML), 0644)
 }
 
-//export StartServer
 // 启动移动端代理服务。返回值: 1 成功受理启动, 0 已经在运行中, -1 参数或初始化失败
+//
+//export StartServer
 func StartServer(cConfigDir *C.char, cHost *C.char, port C.int) C.int {
 	lifecycleMu.Lock()
 	defer lifecycleMu.Unlock()
@@ -182,6 +166,10 @@ func StartServer(cConfigDir *C.char, cHost *C.char, port C.int) C.int {
 
 	serverStatus.Store(StatusStarting)
 
+	// 确保管理密钥并注入环境变量与选项
+	mgmtKey := getOrInitManagementKey(configDir)
+	_ = os.Setenv("MANAGEMENT_PASSWORD", mgmtKey)
+
 	// 1. 确保运行目录与初始配置落盘
 	authDir := filepath.Join(configDir, "auths")
 	if errAuthDir := os.MkdirAll(authDir, 0700); errAuthDir != nil {
@@ -191,7 +179,7 @@ func StartServer(cConfigDir *C.char, cHost *C.char, port C.int) C.int {
 	}
 
 	cfgPath := filepath.Join(configDir, "config.yaml")
-	if errInitCfg := ensureInitialConfigFile(cfgPath, host, targetPort, authDir); errInitCfg != nil {
+	if errInitCfg := ensureInitialConfigFile(cfgPath, host, targetPort, authDir, mgmtKey); errInitCfg != nil {
 		log.Errorf("mobile start: failed to ensure initial config: %v", errInitCfg)
 		serverStatus.Store(StatusFailed)
 		return -1
@@ -215,7 +203,8 @@ func StartServer(cConfigDir *C.char, cHost *C.char, port C.int) C.int {
 	// 3. 构建核心服务
 	builder := cliproxy.NewBuilder().
 		WithConfig(cfg).
-		WithConfigPath(cfgPath)
+		WithConfigPath(cfgPath).
+		WithLocalManagementPassword(mgmtKey)
 
 	svc, errBuild := builder.Build()
 	if errBuild != nil {
@@ -253,8 +242,9 @@ func StartServer(cConfigDir *C.char, cHost *C.char, port C.int) C.int {
 	return 1
 }
 
-//export StopServer
 // 停止服务并等待其完成资源回收
+//
+//export StopServer
 func StopServer() {
 	lifecycleMu.Lock()
 	cancel := sessionCancel
@@ -282,14 +272,16 @@ func StopServer() {
 	serverStatus.Store(StatusStopped)
 }
 
-//export GetServerStatus
 // 返回当前服务运行状态码
+//
+//export GetServerStatus
 func GetServerStatus() C.int {
 	return C.int(serverStatus.Load())
 }
 
-//export PollOAuthURL
 // 供 Android Kotlin 协程在后台工作线程轮询拉取 OAuth 授权 URL
+//
+//export PollOAuthURL
 func PollOAuthURL(timeoutMs C.int) *C.char {
 	timeout := time.Duration(timeoutMs) * time.Millisecond
 	select {
@@ -300,8 +292,9 @@ func PollOAuthURL(timeoutMs C.int) *C.char {
 	}
 }
 
-//export FreeCString
 // 释放 CString 堆内存
+//
+//export FreeCString
 func FreeCString(ptr *C.char) {
 	if ptr != nil {
 		C.free(unsafe.Pointer(ptr))

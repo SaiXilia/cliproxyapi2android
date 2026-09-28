@@ -48,12 +48,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvApiKeyValue: TextView
     private lateinit var btnCopyKey: MaterialButton
     private lateinit var btnToggleAuthMode: MaterialButton
+    private lateinit var tvMgmtKeyStatus: TextView
+    private lateinit var tvMgmtKeyValue: TextView
+    private lateinit var btnCopyMgmtKey: MaterialButton
+    private lateinit var btnEditMgmtKey: MaterialButton
     private lateinit var btnTestModels: MaterialButton
     private lateinit var btnTestHealthz: MaterialButton
 
     private var isRunning = false
     private var localIp: String = "127.0.0.1"
     private var currentApiKey: String? = null
+    private var currentMgmtKey: String = "admin8317"
 
     private val requestNotificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -76,6 +81,10 @@ class MainActivity : AppCompatActivity() {
         tvApiKeyValue = findViewById(R.id.tvApiKeyValue)
         btnCopyKey = findViewById(R.id.btnCopyKey)
         btnToggleAuthMode = findViewById(R.id.btnToggleAuthMode)
+        tvMgmtKeyStatus = findViewById(R.id.tvMgmtKeyStatus)
+        tvMgmtKeyValue = findViewById(R.id.tvMgmtKeyValue)
+        btnCopyMgmtKey = findViewById(R.id.btnCopyMgmtKey)
+        btnEditMgmtKey = findViewById(R.id.btnEditMgmtKey)
         btnTestModels = findViewById(R.id.btnTestModels)
         btnTestHealthz = findViewById(R.id.btnTestHealthz)
 
@@ -96,13 +105,13 @@ class MainActivity : AppCompatActivity() {
         btnCopyLocalhost.setOnClickListener {
             val apiUrl = "http://127.0.0.1:8317/v1"
             copyToClipboard("CLIProxy 本机地址", apiUrl)
-            Toast.makeText(this, "本机固定地址已复制 (永不失效): $apiUrl", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "已复制本机地址: $apiUrl", Toast.LENGTH_SHORT).show()
         }
 
         btnCopyLan.setOnClickListener {
             val apiUrl = "http://$localIp:8317/v1"
             copyToClipboard("CLIProxy 局域网地址", apiUrl)
-            Toast.makeText(this, "局域网跨设备地址已复制: $apiUrl", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "已复制局域网地址: $apiUrl", Toast.LENGTH_SHORT).show()
         }
 
         btnOpenWeb.setOnClickListener {
@@ -118,6 +127,15 @@ class MainActivity : AppCompatActivity() {
 
         btnToggleAuthMode.setOnClickListener {
             toggleAuthMode(configDir)
+        }
+
+        btnCopyMgmtKey.setOnClickListener {
+            copyToClipboard("CLIProxy 管理密钥", currentMgmtKey)
+            Toast.makeText(this, "管理密钥已复制: $currentMgmtKey", Toast.LENGTH_SHORT).show()
+        }
+
+        btnEditMgmtKey.setOnClickListener {
+            showEditManagementKeyDialog(configDir)
         }
 
         btnTestModels.setOnClickListener {
@@ -161,8 +179,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateLocalIp() {
         localIp = detectLocalIpAddress()
-        tvEndpointLocal.text = "本机固定: http://127.0.0.1:8317/v1"
-        tvEndpointLan.text = "局域网共享: http://$localIp:8317/v1"
+        tvEndpointLocal.text = "本机地址: http://127.0.0.1:8317/v1"
+        tvEndpointLan.text = "局域网地址: http://$localIp:8317/v1"
     }
 
     private fun detectLocalIpAddress(): String {
@@ -219,12 +237,77 @@ class MainActivity : AppCompatActivity() {
         return File(dir, "config.yaml")
     }
 
+    private fun getManagementKeyFile(): File {
+        val dir = File(noBackupFilesDir, "cliproxy")
+        return File(dir, "management_key.txt")
+    }
+
+    private fun loadManagementKey(): String {
+        val file = getManagementKeyFile()
+        if (file.exists()) {
+            val key = file.readText().trim()
+            if (key.isNotEmpty()) return key
+        }
+        val defaultKey = "admin8317"
+        try {
+            file.parentFile?.mkdirs()
+            file.writeText(defaultKey)
+        } catch (_: Exception) {}
+        return defaultKey
+    }
+
+    private fun saveManagementKey(newKey: String) {
+        val file = getManagementKeyFile()
+        try {
+            file.parentFile?.mkdirs()
+            file.writeText(newKey.trim())
+        } catch (_: Exception) {}
+    }
+
+    private fun showEditManagementKeyDialog(configDir: String) {
+        val currentKey = loadManagementKey()
+        val input = android.widget.EditText(this).apply {
+            setText(currentKey)
+            setSelection(currentKey.length)
+            hint = "请输入新的管理密钥"
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.GRAY)
+        }
+        val container = android.widget.FrameLayout(this).apply {
+            val pad = (20 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad / 2, pad, pad / 2)
+            addView(input)
+        }
+
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("修改 WebUI 管理密钥")
+            .setMessage("用于浏览器访问 WebUI 控制台的登录密码:")
+            .setView(container)
+            .setPositiveButton("保存并重启") { _, _ ->
+                val newKey = input.text.toString().trim()
+                if (newKey.isNotEmpty()) {
+                    saveManagementKey(newKey)
+                    refreshAuthSettingsUI()
+                    if (isRunning) {
+                        stopProxy()
+                        lifecycleScope.launch {
+                            delay(1200)
+                            startProxy(configDir)
+                        }
+                    }
+                    Toast.makeText(this, "管理密钥已更新: $newKey", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
     private fun refreshAuthSettingsUI() {
         currentApiKey = loadApiKeyFromConfigFile()
         if (currentApiKey.isNullOrBlank()) {
-            tvApiKeyStatus.text = "当前: 免密模式 (浏览器与客户端可直接访问)"
+            tvApiKeyStatus.text = "当前: 免密模式"
             tvApiKeyStatus.setTextColor(Color.parseColor("#34D399"))
-            tvApiKeyValue.text = "无需 API Key (开放访问)"
+            tvApiKeyValue.text = "无需 API Key"
             btnCopyKey.isEnabled = false
             btnToggleAuthMode.text = "启用密钥保护"
         } else {
@@ -232,8 +315,11 @@ class MainActivity : AppCompatActivity() {
             tvApiKeyStatus.setTextColor(Color.parseColor("#38BDF8"))
             tvApiKeyValue.text = currentApiKey
             btnCopyKey.isEnabled = true
-            btnToggleAuthMode.text = "切换为免密访问 (推荐)"
+            btnToggleAuthMode.text = "切换为免密访问"
         }
+
+        currentMgmtKey = loadManagementKey()
+        tvMgmtKeyValue.text = currentMgmtKey
     }
 
     private fun loadApiKeyFromConfigFile(): String? {
@@ -350,7 +436,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openManagementPage() {
-        openUrlInBrowser("http://127.0.0.1:8317/management.html")
+        val mgmtKey = loadManagementKey()
+        val url = if (mgmtKey.isBlank()) {
+            "http://127.0.0.1:8317/management.html"
+        } else {
+            "http://127.0.0.1:8317/management.html?mgmt_key=$mgmtKey"
+        }
+        openUrlInBrowser(url)
     }
 
     private fun startStatusChecker() {
@@ -393,14 +485,18 @@ class MainActivity : AppCompatActivity() {
             btnTestHealthz.isEnabled = false
             btnCopyLocalhost.isEnabled = false
             btnCopyLan.isEnabled = false
+            btnCopyMgmtKey.isEnabled = false
+            btnEditMgmtKey.isEnabled = false
             return
         }
 
         btnToggle.isEnabled = true
         btnCopyLocalhost.isEnabled = true
         btnCopyLan.isEnabled = true
+        btnCopyMgmtKey.isEnabled = true
+        btnEditMgmtKey.isEnabled = true
         if (running) {
-            tvStatus.text = "运行中 (8317 端口已就绪)"
+            tvStatus.text = "运行中"
             statusIndicator.setBackgroundColor(Color.parseColor("#10B981")) // 绿色
             btnToggle.text = "停止服务"
             btnToggle.setBackgroundColor(Color.parseColor("#EF4444")) // 红色

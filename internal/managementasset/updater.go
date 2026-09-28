@@ -1,8 +1,11 @@
 package managementasset
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/sha256"
+	_ "embed"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -37,6 +40,46 @@ const (
 
 // ManagementFileName exposes the control panel asset filename.
 const ManagementFileName = managementAssetName
+
+//go:embed default_management.html.gz
+var defaultManagementHTMLGz []byte
+
+// DefaultManagementHTML returns the uncompressed default management control panel asset.
+func DefaultManagementHTML() ([]byte, error) {
+	reader, err := gzip.NewReader(bytes.NewReader(defaultManagementHTMLGz))
+	if err != nil {
+		return nil, fmt.Errorf("failed to decompress default management asset: %w", err)
+	}
+	defer func() {
+		_ = reader.Close()
+	}()
+	return io.ReadAll(reader)
+}
+
+// EnsureDefaultManagementAsset ensures that staticDir contains a valid management.html.
+// If the asset does not exist or appears to be a stub (< 50KB or contains placeholder markers),
+// the embedded official asset is written out.
+func EnsureDefaultManagementAsset(staticDir string) error {
+	staticDir = strings.TrimSpace(staticDir)
+	if staticDir == "" {
+		return errors.New("static directory is empty")
+	}
+	if err := os.MkdirAll(staticDir, 0700); err != nil {
+		return err
+	}
+	targetPath := filepath.Join(staticDir, managementAssetName)
+	info, err := os.Stat(targetPath)
+	if err == nil && info.Size() > 50*1024 {
+		return nil
+	}
+
+	data, err := DefaultManagementHTML()
+	if err != nil {
+		return err
+	}
+
+	return atomicWriteFile(targetPath, data)
+}
 
 var (
 	lastUpdateCheckMu   sync.Mutex
@@ -199,6 +242,9 @@ func EnsureLatestManagementHTML(ctx context.Context, staticDir string, proxyURL 
 		return false
 	}
 	localPath := filepath.Join(staticDir, managementAssetName)
+
+	// Ensure baseline management.html is available immediately
+	_ = EnsureDefaultManagementAsset(staticDir)
 
 	_, _, _ = sfGroup.Do(localPath, func() (interface{}, error) {
 		lastUpdateCheckMu.Lock()

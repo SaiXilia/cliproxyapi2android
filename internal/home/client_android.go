@@ -96,19 +96,19 @@ func New(_ config.HomeConfig) *Client {
 	return &Client{}
 }
 
-func (c *Client) Enabled() bool                                      { return false }
-func (c *Client) HeartbeatOK() bool                                  { return false }
-func (c *Client) Close()                                             {}
-func (c *Client) NewLifetime() *Client                               { return c }
-func (c *Client) SetManagedLifetime(_ bool)                          {}
-func (c *Client) MembershipInstanceID() string                       { return "" }
-func (c *Client) LegacyMembership() bool                             { return false }
-func (c *Client) EnableLegacyMembership()                            {}
-func (c *Client) AbortAmbiguousDispatch()                            {}
-func (c *Client) AmbiguousDispatch() bool                            { return false }
-func (c *Client) SuppressTakeover()                                  {}
-func (c *Client) Ping(_ context.Context) error                       { return ErrDisabled }
-func (c *Client) GetConfig(_ context.Context) ([]byte, error)        { return nil, ErrDisabled }
+func (c *Client) Enabled() bool                               { return false }
+func (c *Client) HeartbeatOK() bool                           { return false }
+func (c *Client) Close()                                      {}
+func (c *Client) NewLifetime() *Client                        { return c }
+func (c *Client) SetManagedLifetime(_ bool)                   {}
+func (c *Client) MembershipInstanceID() string                { return "" }
+func (c *Client) LegacyMembership() bool                      { return false }
+func (c *Client) EnableLegacyMembership()                     {}
+func (c *Client) AbortAmbiguousDispatch()                     {}
+func (c *Client) AmbiguousDispatch() bool                     { return false }
+func (c *Client) SuppressTakeover()                           {}
+func (c *Client) Ping(_ context.Context) error                { return ErrDisabled }
+func (c *Client) GetConfig(_ context.Context) ([]byte, error) { return nil, ErrDisabled }
 func (c *Client) GetModels(_ context.Context, _ http.Header, _ url.Values) ([]byte, error) {
 	return nil, ErrDisabled
 }

@@ -28,13 +28,15 @@ func NewPostgresStore(_ context.Context, _ PostgresStoreConfig) (*PostgresStore,
 	return nil, errRemoteStoreDisabledOnAndroid
 }
 
-func (s *PostgresStore) Close() error                                              { return nil }
-func (s *PostgresStore) EnsureSchema(_ context.Context) error                      { return errRemoteStoreDisabledOnAndroid }
-func (s *PostgresStore) Bootstrap(_ context.Context, _ string) error               { return errRemoteStoreDisabledOnAndroid }
-func (s *PostgresStore) ConfigPath() string                                        { return "" }
-func (s *PostgresStore) AuthDir() string                                           { return "" }
-func (s *PostgresStore) WorkDir() string                                           { return "" }
-func (s *PostgresStore) SetBaseDir(string)                                         {}
+func (s *PostgresStore) Close() error                         { return nil }
+func (s *PostgresStore) EnsureSchema(_ context.Context) error { return errRemoteStoreDisabledOnAndroid }
+func (s *PostgresStore) Bootstrap(_ context.Context, _ string) error {
+	return errRemoteStoreDisabledOnAndroid
+}
+func (s *PostgresStore) ConfigPath() string { return "" }
+func (s *PostgresStore) AuthDir() string    { return "" }
+func (s *PostgresStore) WorkDir() string    { return "" }
+func (s *PostgresStore) SetBaseDir(string)  {}
 func (s *PostgresStore) Save(_ context.Context, _ *cliproxyauth.Auth) (string, error) {
 	return "", errRemoteStoreDisabledOnAndroid
 }
@@ -69,10 +71,12 @@ func NewObjectTokenStore(_ ObjectStoreConfig) (*ObjectTokenStore, error) {
 	return nil, errRemoteStoreDisabledOnAndroid
 }
 
-func (s *ObjectTokenStore) SetBaseDir(string)                                   {}
-func (s *ObjectTokenStore) ConfigPath() string                                  { return "" }
-func (s *ObjectTokenStore) AuthDir() string                                     { return "" }
-func (s *ObjectTokenStore) Bootstrap(_ context.Context, _ string) error          { return errRemoteStoreDisabledOnAndroid }
+func (s *ObjectTokenStore) SetBaseDir(string)  {}
+func (s *ObjectTokenStore) ConfigPath() string { return "" }
+func (s *ObjectTokenStore) AuthDir() string    { return "" }
+func (s *ObjectTokenStore) Bootstrap(_ context.Context, _ string) error {
+	return errRemoteStoreDisabledOnAndroid
+}
 func (s *ObjectTokenStore) Save(_ context.Context, _ *cliproxyauth.Auth) (string, error) {
 	return "", errRemoteStoreDisabledOnAndroid
 }
@@ -96,10 +100,10 @@ func NewGitTokenStore(_, _, _, _ string) *GitTokenStore {
 	return &GitTokenStore{}
 }
 
-func (s *GitTokenStore) SetBaseDir(_ string)                                    {}
-func (s *GitTokenStore) AuthDir() string                                        { return "" }
-func (s *GitTokenStore) ConfigPath() string                                     { return "" }
-func (s *GitTokenStore) EnsureRepository() error                                { return errRemoteStoreDisabledOnAndroid }
+func (s *GitTokenStore) SetBaseDir(_ string)     {}
+func (s *GitTokenStore) AuthDir() string         { return "" }
+func (s *GitTokenStore) ConfigPath() string      { return "" }
+func (s *GitTokenStore) EnsureRepository() error { return errRemoteStoreDisabledOnAndroid }
 func (s *GitTokenStore) Save(_ context.Context, _ *cliproxyauth.Auth) (string, error) {
 	return "", errRemoteStoreDisabledOnAndroid
 }

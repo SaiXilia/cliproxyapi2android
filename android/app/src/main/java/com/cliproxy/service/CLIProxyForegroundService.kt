@@ -58,7 +58,7 @@ class CLIProxyForegroundService : Service() {
         val port = intent?.getIntExtra(EXTRA_PORT, 8317) ?: 8317
 
         acquireWakeLock()
-        startForegroundNotification(host, port)
+        startForegroundNotification()
 
         serviceScope.launch {
             val res = CLIProxy.startServer(configDir, host, port)
@@ -86,30 +86,17 @@ class CLIProxyForegroundService : Service() {
         return START_STICKY
     }
 
-    private fun startForegroundNotification(host: String, port: Int) {
-        val stopIntent = Intent(this, StopReceiver::class.java)
-        val stopPendingIntent = PendingIntent.getBroadcast(
-            this, 1, stopIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
+    private fun startForegroundNotification() {
         val mainIntent = Intent(this, MainActivity::class.java)
         val mainPendingIntent = PendingIntent.getActivity(
             this, 0, mainIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // 使用 MediaStyle 强制在紧凑视图（折叠通知）下也固定显示第 0 个操作按钮（停止服务）
-        val mediaStyle = androidx.media.app.NotificationCompat.MediaStyle()
-            .setShowActionsInCompactView(0)
-
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("CLIProxy API 服务正在运行")
-            .setContentText("监听地址: http://$host:$port")
+            .setContentTitle("CLIProxy API 正在运行")
             .setSmallIcon(com.cliproxy.R.drawable.ic_proxy_running)
             .setContentIntent(mainPendingIntent)
-            .addAction(com.cliproxy.R.drawable.ic_stop, "停止服务", stopPendingIntent)
-            .setStyle(mediaStyle)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOngoing(true)
