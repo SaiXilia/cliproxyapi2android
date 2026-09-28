@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="app_background">#09111F</color>
+    <color name="card_background">#121D2F</color>
+    <color name="card_highlight">#14233D</color>
+    <color name="card_stroke">#263750</color>
+    <color name="card_highlight_stroke">#2B4B75</color>
+    <color name="input_background">#0C1626</color>
+    <color name="text_primary">#F8FAFC</color>
+    <color name="text_secondary">#9CAFC7</color>
+    <color name="text_muted">#64748B</color>
+    <color name="accent_blue">#4FC3F7</color>
+    <color name="accent_purple">#C4B5FD</color>
+    <color name="action_blue">#2563EB</color>
+    <color name="status_running">#34D399</color>
+    <color name="status_stopped">#64748B</color>
+</resources>

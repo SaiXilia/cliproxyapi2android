@@ -3,406 +3,617 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:background="#0F172A">
+    android:background="@color/app_background"
+    android:clipToPadding="false"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:paddingStart="18dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="32dp">
 
-        <!-- 顶部标题 -->
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="CLIProxy API"
-            android:textSize="26sp"
-            android:textStyle="bold"
-            android:textColor="#F8FAFC"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="18dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <!-- 状态卡片 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/app_name"
+                    android:textColor="@color/text_primary"
+                    android:textSize="27sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/app_subtitle"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnLanguage"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="72dp"
+                android:minHeight="40dp"
+                android:text="@string/switch_language"
+                android:textColor="@color/accent_blue"
+                android:textSize="12sp"
+                app:cornerRadius="12dp"
+                app:strokeColor="@color/card_stroke" />
+        </LinearLayout>
+
+        <!-- Service controls -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardBackgroundColor="#1E293B"
-            app:cardCornerRadius="16dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="#334155"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="14dp"
+            app:cardBackgroundColor="@color/card_highlight"
+            app:cardCornerRadius="22dp"
+            app:strokeColor="@color/card_highlight_stroke"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/service_card_title"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:layout_marginTop="7dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
                     <View
                         android:id="@+id/statusIndicator"
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
-                        android:background="#EF4444"
-                        android:layout_marginEnd="10dp" />
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="@drawable/status_indicator"
+                        android:backgroundTint="@color/status_stopped" />
 
                     <TextView
                         android:id="@+id/tvStatus"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="已停止"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="#F8FAFC" />
+                        android:text="@string/status_stopped"
+                        android:textColor="@color/text_primary"
+                        android:textSize="21sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnToggle"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minHeight="50dp"
+                        android:text="@string/action_start"
+                        android:textColor="@android:color/white"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@color/action_blue"
+                        app:cornerRadius="14dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnOpenWeb"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1.15"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minHeight="50dp"
+                        android:singleLine="true"
+                        android:text="@string/open_management_console"
+                        android:textSize="13sp"
+                        app:cornerRadius="14dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Connection addresses -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="14dp"
+            app:cardBackgroundColor="@color/card_background"
+            app:cardCornerRadius="22dp"
+            app:strokeColor="@color/card_stroke"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/connection_addresses_title"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/connection_addresses_description"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:text="@string/openai_compatible_base_url"
+                    android:textColor="@color/accent_blue"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvEndpointLocal"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="本机地址: http://127.0.0.1:8317/v1"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:textColor="#34D399"
-                    android:layout_marginTop="10dp" />
+                    android:layout_marginTop="9dp"
+                    android:fontFamily="monospace"
+                    android:text="@string/local_address_loading"
+                    android:textColor="@color/text_primary"
+                    android:textIsSelectable="true"
+                    android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/tvEndpointLan"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="局域网地址: http://127.0.0.1:8317/v1"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:textColor="#38BDF8"
-                    android:layout_marginTop="6dp" />
-
-                <TextView
-                    android:id="@+id/tvDataDir"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="数据目录: 正在加载..."
-                    android:textSize="11sp"
-                    android:textColor="#64748B"
-                    android:layout_marginTop="8dp" />
+                    android:layout_marginTop="6dp"
+                    android:fontFamily="monospace"
+                    android:text="@string/lan_address_loading"
+                    android:textColor="@color/text_primary"
+                    android:textIsSelectable="true"
+                    android:textSize="12sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="12dp">
+                    android:layout_marginTop="11dp"
+                    android:orientation="horizontal">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnCopyLocalhost"
+                        style="@style/Widget.Material3.Button.TonalButton"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:minHeight="44dp"
+                        android:layout_height="42dp"
+                        android:layout_marginEnd="5dp"
                         android:layout_weight="1"
-                        android:text="复制本机地址"
-                        android:textSize="12sp"
-                        android:singleLine="true"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_marginEnd="6dp" />
+                        android:minHeight="42dp"
+                        android:singleLine="true"
+                        android:text="@string/copy_local_address"
+                        android:textSize="11sp"
+                        app:cornerRadius="12dp" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnCopyLan"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:minHeight="44dp"
+                        android:layout_height="42dp"
+                        android:layout_marginStart="5dp"
                         android:layout_weight="1"
-                        android:text="复制局域网地址"
-                        android:textSize="12sp"
-                        android:singleLine="true"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        app:strokeColor="#38BDF8"
-                        android:textColor="#38BDF8"
-                        android:layout_marginStart="6dp" />
+                        android:minHeight="42dp"
+                        android:singleLine="true"
+                        android:text="@string/copy_lan_address"
+                        android:textColor="@color/accent_blue"
+                        android:textSize="11sp"
+                        app:cornerRadius="12dp"
+                        app:strokeColor="@color/card_stroke" />
                 </LinearLayout>
 
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- 认证与 API Key 卡片 -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardBackgroundColor="#1E293B"
-            app:cardCornerRadius="16dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="#334155"
-            android:layout_marginBottom="16dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="18dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="@color/card_stroke" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="API 访问认证设置"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:textColor="#F8FAFC" />
-
-                <TextView
-                    android:id="@+id/tvApiKeyStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="当前: 免密模式"
+                    android:text="@string/claude_compatible_base_url"
+                    android:textColor="@color/accent_purple"
                     android:textSize="13sp"
-                    android:textColor="#34D399"
-                    android:layout_marginTop="6dp" />
+                    android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/tvApiKeyValue"
+                    android:id="@+id/tvClaudeEndpointLocal"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="无需 API Key"
-                    android:textSize="12sp"
+                    android:layout_marginTop="9dp"
                     android:fontFamily="monospace"
-                    android:textColor="#94A3B8"
-                    android:background="#0F172A"
-                    android:padding="8dp"
-                    android:layout_marginTop="8dp" />
+                    android:text="@string/claude_local_address_loading"
+                    android:textColor="@color/text_primary"
+                    android:textIsSelectable="true"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvClaudeEndpointLan"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:fontFamily="monospace"
+                    android:text="@string/claude_lan_address_loading"
+                    android:textColor="@color/text_primary"
+                    android:textIsSelectable="true"
+                    android:textSize="12sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="10dp">
+                    android:layout_marginTop="11dp"
+                    android:orientation="horizontal">
 
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnCopyKey"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:minHeight="44dp"
-                        android:layout_weight="1"
-                        android:text="复制 Key"
-                        android:textSize="12sp"
-                        android:singleLine="true"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
+                        android:id="@+id/btnCopyClaudeLocalhost"
                         style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_marginEnd="8dp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnToggleAuthMode"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:minHeight="44dp"
-                        android:layout_weight="1.2"
-                        android:text="切换为免密访问"
-                        android:textSize="12sp"
-                        android:singleLine="true"
+                        android:layout_height="42dp"
+                        android:layout_marginEnd="5dp"
+                        android:layout_weight="1"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
+                        android:minHeight="42dp"
+                        android:singleLine="true"
+                        android:text="@string/copy_local_address"
+                        android:textSize="11sp"
+                        app:cornerRadius="12dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCopyClaudeLan"
                         style="@style/Widget.Material3.Button.OutlinedButton"
-                        app:strokeColor="#38BDF8"
-                        android:textColor="#38BDF8" />
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minHeight="42dp"
+                        android:singleLine="true"
+                        android:text="@string/copy_lan_address"
+                        android:textColor="@color/accent_blue"
+                        android:textSize="11sp"
+                        app:cornerRadius="12dp"
+                        app:strokeColor="@color/card_stroke" />
                 </LinearLayout>
 
+                <TextView
+                    android:id="@+id/tvDataDir"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/data_directory_loading"
+                    android:textColor="@color/text_muted"
+                    android:textSize="10sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- WebUI 控制台管理密钥卡片 -->
+        <!-- API authentication -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardBackgroundColor="#1E293B"
-            app:cardCornerRadius="16dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="#334155"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="14dp"
+            app:cardBackgroundColor="@color/card_background"
+            app:cardCornerRadius="22dp"
+            app:strokeColor="@color/card_stroke"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="18dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/api_authentication_title"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvApiKeyStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/auth_mode_keyless"
+                        android:textColor="@color/status_running"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="WebUI 控制台管理密钥"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:textColor="#F8FAFC" />
+                    android:layout_marginTop="6dp"
+                    android:text="@string/api_authentication_description"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:hint="@string/api_key_hint"
+                    app:boxBackgroundColor="@color/input_background"
+                    app:boxCornerRadiusBottomEnd="14dp"
+                    app:boxCornerRadiusBottomStart="14dp"
+                    app:boxCornerRadiusTopEnd="14dp"
+                    app:boxCornerRadiusTopStart="14dp"
+                    app:boxStrokeColor="@color/accent_blue"
+                    app:endIconMode="password_toggle"
+                    app:endIconTint="@color/text_secondary"
+                    app:hintTextColor="@color/text_secondary">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etApiKey"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:importantForAutofill="no"
+                        android:inputType="textPassword"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_muted"
+                        android:textSize="13sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSaveApiKey"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_marginEnd="5dp"
+                        android:layout_weight="1"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minHeight="44dp"
+                        android:singleLine="true"
+                        android:text="@string/save_api_key"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp"
+                        app:backgroundTint="@color/action_blue"
+                        app:cornerRadius="12dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnGenerateApiKey"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minHeight="44dp"
+                        android:singleLine="true"
+                        android:text="@string/generate_random_key"
+                        android:textSize="12sp"
+                        app:cornerRadius="12dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCopyKey"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_weight="1"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minHeight="42dp"
+                        android:singleLine="true"
+                        android:text="@string/copy_key"
+                        android:textColor="@color/accent_blue"
+                        android:textSize="12sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnDisableApiKey"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_weight="1"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minHeight="42dp"
+                        android:singleLine="true"
+                        android:text="@string/disable_key_protection"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- WebUI management key -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="14dp"
+            app:cardBackgroundColor="@color/card_background"
+            app:cardCornerRadius="22dp"
+            app:strokeColor="@color/card_stroke"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/management_key_title"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvMgmtKeyStatus"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="浏览器访问控制台凭证"
-                    android:textSize="13sp"
-                    android:textColor="#38BDF8"
-                    android:layout_marginTop="6dp" />
+                    android:layout_marginTop="5dp"
+                    android:text="@string/management_key_description"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/tvMgmtKeyValue"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="admin8317"
-                    android:textSize="12sp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/value_background"
                     android:fontFamily="monospace"
-                    android:textColor="#F8FAFC"
-                    android:background="#0F172A"
-                    android:padding="8dp"
-                    android:layout_marginTop="8dp" />
+                    android:padding="12dp"
+                    android:text="@string/default_management_key"
+                    android:textColor="@color/text_primary"
+                    android:textIsSelectable="true"
+                    android:textSize="13sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="10dp">
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnCopyMgmtKey"
+                        style="@style/Widget.Material3.Button.TonalButton"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:minHeight="44dp"
+                        android:layout_height="44dp"
+                        android:layout_marginEnd="5dp"
                         android:layout_weight="1"
-                        android:text="复制管理密钥"
-                        android:textSize="12sp"
-                        android:singleLine="true"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_marginEnd="8dp" />
+                        android:minHeight="44dp"
+                        android:singleLine="true"
+                        android:text="@string/copy_management_key"
+                        android:textSize="12sp"
+                        app:cornerRadius="12dp" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnEditMgmtKey"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:minHeight="44dp"
+                        android:layout_height="44dp"
+                        android:layout_marginStart="5dp"
                         android:layout_weight="1"
-                        android:text="修改管理密钥"
-                        android:textSize="12sp"
-                        android:singleLine="true"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        app:strokeColor="#38BDF8"
-                        android:textColor="#38BDF8" />
+                        android:minHeight="44dp"
+                        android:singleLine="true"
+                        android:text="@string/edit_management_key"
+                        android:textColor="@color/accent_blue"
+                        android:textSize="12sp"
+                        app:cornerRadius="12dp"
+                        app:strokeColor="@color/card_stroke" />
                 </LinearLayout>
-
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 操作按钮区 -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnToggle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="52dp"
-            android:text="启动服务"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            app:cornerRadius="12dp"
-            app:backgroundTint="#2563EB"
-            android:textColor="#FFFFFF"
-            android:layout_marginBottom="10dp" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="12dp">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnTestModels"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:minHeight="44dp"
-                android:layout_weight="1"
-                android:text="在浏览器查看模型"
-                android:textSize="12sp"
-                android:singleLine="true"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                app:strokeColor="#38BDF8"
-                android:textColor="#38BDF8"
-                android:layout_marginEnd="6dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnTestHealthz"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:minHeight="44dp"
-                android:layout_weight="1"
-                android:text="健康检查"
-                android:textSize="12sp"
-                android:singleLine="true"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                app:strokeColor="#94A3B8"
-                android:textColor="#94A3B8"
-                android:layout_marginStart="6dp" />
-        </LinearLayout>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnOpenWeb"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:text="打开管理控制台"
-            android:textSize="14sp"
-            android:singleLine="true"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            style="@style/Widget.Material3.Button.TonalButton"
-            app:cornerRadius="12dp"
-            android:layout_marginBottom="16dp" />
-
-        <!-- 运行信息卡片 -->
+        <!-- Network information -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardBackgroundColor="#1E293B"
-            app:cardCornerRadius="16dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="#334155">
+            app:cardBackgroundColor="@color/card_background"
+            app:cardCornerRadius="22dp"
+            app:strokeColor="@color/card_stroke"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="18dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="网络与 VPN 兼容说明"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:textColor="#F8FAFC"
-                    android:layout_marginBottom="6dp" />
+                    android:text="@string/network_vpn_title"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="• 本机软件使用 127.0.0.1:8317，局域网其他设备使用局域网 IP 直连。\n• 若开启 NekoBox 等 VPN：请在【分应用代理】中将客户端软件设为【绕过代理】；或在【路由规则】中添加 127.0.0.0/8 直连规则。"
-                    android:textSize="12sp"
+                    android:layout_marginTop="8dp"
                     android:lineSpacingExtra="4dp"
-                    android:textColor="#94A3B8" />
-
+                    android:text="@string/network_vpn_description"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
     </LinearLayout>
 </ScrollView>

@@ -1,12 +1,77 @@
 <resources>
     <string name="app_name">CLIProxy API</string>
+    <string name="app_subtitle">本地 AI API 网关</string>
+    <string name="switch_language">English</string>
+
     <string name="service_notification_title">CLIProxy API 本地代理服务</string>
     <string name="service_notification_running">服务正在运行中: http://127.0.0.1:8317</string>
     <string name="action_stop">停止服务</string>
     <string name="action_start">启动服务</string>
+    <string name="action_starting">启动中…</string>
     <string name="action_open_web">打开管理控制台 (Web)</string>
-    <string name="status_running">运行中 (127.0.0.1:8317)</string>
+    <string name="status_running">运行中</string>
     <string name="status_stopped">已停止</string>
-    <string name="status_starting">正在启动...</string>
-    <string name="status_stopping">正在停止...</string>
+    <string name="status_starting">正在启动…</string>
+    <string name="status_stopping">正在停止…</string>
+    <string name="service_card_title">服务状态</string>
+
+    <string name="connection_addresses_title">连接地址</string>
+    <string name="connection_addresses_description">按客户端使用的协议选择对应 Base URL</string>
+    <string name="openai_compatible_base_url">OpenAI 兼容 Base URL</string>
+    <string name="claude_compatible_base_url">Claude 兼容 Base URL</string>
+    <string name="local_address">本机地址: %1$s</string>
+    <string name="lan_address">局域网地址: %1$s</string>
+    <string name="local_address_loading">本机地址: http://127.0.0.1:8317/v1</string>
+    <string name="lan_address_loading">局域网地址: http://127.0.0.1:8317/v1</string>
+    <string name="claude_local_address_loading">本机地址: http://127.0.0.1:8317</string>
+    <string name="claude_lan_address_loading">局域网地址: http://127.0.0.1:8317</string>
+    <string name="data_directory">数据目录: %1$s</string>
+    <string name="data_directory_loading">数据目录: 正在加载…</string>
+    <string name="copy_local_address">复制本机地址</string>
+    <string name="copy_lan_address">复制局域网地址</string>
+
+    <string name="api_authentication_title">API 访问认证设置</string>
+    <string name="api_authentication_description">手动设置密钥，或一键生成安全的随机密钥</string>
+    <string name="auth_mode_keyless">免密访问</string>
+    <string name="auth_mode_protected">密钥已启用</string>
+    <string name="api_key_not_required">无需 API Key</string>
+    <string name="api_key_hint">API Key</string>
+    <string name="api_key_required">API Key 不能为空</string>
+    <string name="save_api_key">保存密钥</string>
+    <string name="generate_random_key">随机生成</string>
+    <string name="copy_key">复制 Key</string>
+    <string name="enable_key_protection">启用密钥保护</string>
+    <string name="switch_to_keyless_access">切换为免密访问</string>
+    <string name="disable_key_protection">停用密钥验证</string>
+
+    <string name="management_key_title">WebUI 控制台管理密钥</string>
+    <string name="management_key_description">浏览器访问控制台凭证</string>
+    <string name="default_management_key" translatable="false">admin8317</string>
+    <string name="copy_management_key">复制管理密钥</string>
+    <string name="edit_management_key">修改管理密钥</string>
+    <string name="management_key_hint">请输入新的管理密钥</string>
+    <string name="edit_management_key_title">修改 WebUI 管理密钥</string>
+    <string name="edit_management_key_message">用于浏览器访问 WebUI 控制台的登录密码:</string>
+    <string name="save_and_restart">保存并重启</string>
+    <string name="cancel">取消</string>
+
+    <string name="open_management_console">打开管理控制台</string>
+    <string name="network_vpn_title">网络与 VPN 兼容说明</string>
+    <string name="network_vpn_description">• 本机上的客户端请使用上方对应格式的 127.0.0.1 地址；局域网内其他设备请使用上方对应格式的局域网地址。\n• 开启 VPN 或代理软件后若无法连接，请确保本地地址走直连，包括 127.0.0.0/8 和当前局域网网段。可使用【绕过局域网/LAN】、【分应用代理】或自定义【路由规则】，具体名称因软件而异。\n• 使用【分应用绕过】时，该客户端的全部流量都不会经过 VPN，请仅在需要时启用。</string>
+
+    <string name="clipboard_local_address">CLIProxy 本机地址</string>
+    <string name="clipboard_lan_address">CLIProxy 局域网地址</string>
+    <string name="clipboard_claude_local_address">CLIProxy Claude 本机地址</string>
+    <string name="clipboard_claude_lan_address">CLIProxy Claude 局域网地址</string>
+    <string name="clipboard_api_key">CLIProxy API Key</string>
+    <string name="clipboard_management_key">CLIProxy 管理密钥</string>
+    <string name="toast_local_address_copied">已复制本机地址: %1$s</string>
+    <string name="toast_lan_address_copied">已复制局域网地址: %1$s</string>
+    <string name="toast_api_key_copied">API Key 已复制到剪贴板</string>
+    <string name="toast_management_key_copied">管理密钥已复制: %1$s</string>
+    <string name="toast_management_key_updated">管理密钥已更新: %1$s</string>
+    <string name="toast_api_key_saved">API Key 已保存</string>
+    <string name="toast_api_key_generated">随机 API Key 已生成并保存</string>
+    <string name="toast_switched_to_keyless">已停用 API 密钥验证</string>
+    <string name="toast_config_update_failed">修改配置失败: %1$s</string>
 </resources>

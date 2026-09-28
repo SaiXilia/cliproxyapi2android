@@ -1,7 +1,11 @@
 <resources>
-    <style name="Theme.CLIProxy" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">#2563EB</item>
-        <item name="android:statusBarColor">#1E293B</item>
+    <style name="Theme.CLIProxy" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/action_blue</item>
+        <item name="colorSecondary">@color/accent_blue</item>
+        <item name="android:colorAccent">@color/accent_blue</item>
+        <item name="android:statusBarColor">@color/app_background</item>
+        <item name="android:navigationBarColor">@color/app_background</item>
         <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
     </style>
 </resources>

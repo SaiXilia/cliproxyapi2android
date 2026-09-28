@@ -1,0 +1,76 @@
+<resources>
+    <string name="app_name">CLIProxy API</string>
+    <string name="app_subtitle">Local AI API gateway</string>
+    <string name="switch_language">中文</string>
+
+    <string name="service_notification_title">CLIProxy API local proxy service</string>
+    <string name="service_notification_running">Service running at http://127.0.0.1:8317</string>
+    <string name="action_stop">Stop service</string>
+    <string name="action_start">Start service</string>
+    <string name="action_starting">Starting…</string>
+    <string name="action_open_web">Open management console (Web)</string>
+    <string name="status_running">Running</string>
+    <string name="status_stopped">Stopped</string>
+    <string name="status_starting">Starting…</string>
+    <string name="status_stopping">Stopping…</string>
+    <string name="service_card_title">Service status</string>
+
+    <string name="connection_addresses_title">Connection addresses</string>
+    <string name="connection_addresses_description">Choose the Base URL that matches your client protocol</string>
+    <string name="openai_compatible_base_url">OpenAI-compatible Base URL</string>
+    <string name="claude_compatible_base_url">Claude-compatible Base URL</string>
+    <string name="local_address">Local address: %1$s</string>
+    <string name="lan_address">LAN address: %1$s</string>
+    <string name="local_address_loading">Local address: http://127.0.0.1:8317/v1</string>
+    <string name="lan_address_loading">LAN address: http://127.0.0.1:8317/v1</string>
+    <string name="claude_local_address_loading">Local address: http://127.0.0.1:8317</string>
+    <string name="claude_lan_address_loading">LAN address: http://127.0.0.1:8317</string>
+    <string name="data_directory">Data directory: %1$s</string>
+    <string name="data_directory_loading">Data directory: Loading…</string>
+    <string name="copy_local_address">Copy local address</string>
+    <string name="copy_lan_address">Copy LAN address</string>
+
+    <string name="api_authentication_title">API access authentication</string>
+    <string name="api_authentication_description">Enter your own key or generate a secure random key</string>
+    <string name="auth_mode_keyless">Keyless access</string>
+    <string name="auth_mode_protected">Key enabled</string>
+    <string name="api_key_not_required">No API key required</string>
+    <string name="api_key_hint">API key</string>
+    <string name="api_key_required">API key cannot be empty</string>
+    <string name="save_api_key">Save key</string>
+    <string name="generate_random_key">Generate random</string>
+    <string name="copy_key">Copy key</string>
+    <string name="enable_key_protection">Enable key protection</string>
+    <string name="switch_to_keyless_access">Switch to keyless access</string>
+    <string name="disable_key_protection">Disable key protection</string>
+
+    <string name="management_key_title">WebUI management key</string>
+    <string name="management_key_description">Credentials for browser console access</string>
+    <string name="copy_management_key">Copy management key</string>
+    <string name="edit_management_key">Edit management key</string>
+    <string name="management_key_hint">Enter a new management key</string>
+    <string name="edit_management_key_title">Edit WebUI management key</string>
+    <string name="edit_management_key_message">Password used to sign in to the WebUI console:</string>
+    <string name="save_and_restart">Save and restart</string>
+    <string name="cancel">Cancel</string>
+
+    <string name="open_management_console">Open management console</string>
+    <string name="network_vpn_title">Network and VPN compatibility</string>
+    <string name="network_vpn_description">• Clients on this device should use the matching 127.0.0.1 address shown above. Other devices on the LAN should use the matching LAN address shown above.\n• If local access stops working after enabling VPN or proxy software, make sure local destinations are routed directly, including 127.0.0.0/8 and the current LAN subnet. Use Bypass LAN, per-app proxy bypass, or custom routing rules; labels vary by app.\n• Per-app bypass sends all traffic from the selected client outside the VPN. Enable it only when needed.</string>
+
+    <string name="clipboard_local_address">CLIProxy local address</string>
+    <string name="clipboard_lan_address">CLIProxy LAN address</string>
+    <string name="clipboard_claude_local_address">CLIProxy Claude local address</string>
+    <string name="clipboard_claude_lan_address">CLIProxy Claude LAN address</string>
+    <string name="clipboard_api_key">CLIProxy API key</string>
+    <string name="clipboard_management_key">CLIProxy management key</string>
+    <string name="toast_local_address_copied">Local address copied: %1$s</string>
+    <string name="toast_lan_address_copied">LAN address copied: %1$s</string>
+    <string name="toast_api_key_copied">API key copied to the clipboard</string>
+    <string name="toast_management_key_copied">Management key copied: %1$s</string>
+    <string name="toast_management_key_updated">Management key updated: %1$s</string>
+    <string name="toast_api_key_saved">API key saved</string>
+    <string name="toast_api_key_generated">Random API key generated and saved</string>
+    <string name="toast_switched_to_keyless">API key protection disabled</string>
+    <string name="toast_config_update_failed">Failed to update configuration: %1$s</string>
+</resources>

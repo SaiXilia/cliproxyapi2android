@@ -6,6 +6,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
@@ -20,6 +21,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.cliproxy.service.CLIProxyForegroundService
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -30,11 +32,14 @@ import java.net.HttpURLConnection
 import java.net.Inet4Address
 import java.net.NetworkInterface
 import java.net.URL
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.security.SecureRandom
 import java.util.Collections
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var btnLanguage: MaterialButton
     private lateinit var tvStatus: TextView
     private lateinit var tvEndpointLocal: TextView
     private lateinit var tvEndpointLan: TextView
@@ -44,16 +49,20 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnOpenWeb: MaterialButton
     private lateinit var btnCopyLocalhost: MaterialButton
     private lateinit var btnCopyLan: MaterialButton
+    private lateinit var tvClaudeEndpointLocal: TextView
+    private lateinit var tvClaudeEndpointLan: TextView
+    private lateinit var btnCopyClaudeLocalhost: MaterialButton
+    private lateinit var btnCopyClaudeLan: MaterialButton
     private lateinit var tvApiKeyStatus: TextView
-    private lateinit var tvApiKeyValue: TextView
+    private lateinit var etApiKey: TextInputEditText
+    private lateinit var btnSaveApiKey: MaterialButton
+    private lateinit var btnGenerateApiKey: MaterialButton
     private lateinit var btnCopyKey: MaterialButton
-    private lateinit var btnToggleAuthMode: MaterialButton
+    private lateinit var btnDisableApiKey: MaterialButton
     private lateinit var tvMgmtKeyStatus: TextView
     private lateinit var tvMgmtKeyValue: TextView
     private lateinit var btnCopyMgmtKey: MaterialButton
     private lateinit var btnEditMgmtKey: MaterialButton
-    private lateinit var btnTestModels: MaterialButton
-    private lateinit var btnTestHealthz: MaterialButton
 
     private var isRunning = false
     private var localIp: String = "127.0.0.1"
@@ -64,10 +73,15 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestPermission()
     ) { _ -> }
 
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLanguage.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        btnLanguage = findViewById(R.id.btnLanguage)
         tvStatus = findViewById(R.id.tvStatus)
         tvEndpointLocal = findViewById(R.id.tvEndpointLocal)
         tvEndpointLan = findViewById(R.id.tvEndpointLan)
@@ -77,22 +91,36 @@ class MainActivity : AppCompatActivity() {
         btnOpenWeb = findViewById(R.id.btnOpenWeb)
         btnCopyLocalhost = findViewById(R.id.btnCopyLocalhost)
         btnCopyLan = findViewById(R.id.btnCopyLan)
+        tvClaudeEndpointLocal = findViewById(R.id.tvClaudeEndpointLocal)
+        tvClaudeEndpointLan = findViewById(R.id.tvClaudeEndpointLan)
+        btnCopyClaudeLocalhost = findViewById(R.id.btnCopyClaudeLocalhost)
+        btnCopyClaudeLan = findViewById(R.id.btnCopyClaudeLan)
         tvApiKeyStatus = findViewById(R.id.tvApiKeyStatus)
-        tvApiKeyValue = findViewById(R.id.tvApiKeyValue)
+        etApiKey = findViewById(R.id.etApiKey)
+        btnSaveApiKey = findViewById(R.id.btnSaveApiKey)
+        btnGenerateApiKey = findViewById(R.id.btnGenerateApiKey)
         btnCopyKey = findViewById(R.id.btnCopyKey)
-        btnToggleAuthMode = findViewById(R.id.btnToggleAuthMode)
+        btnDisableApiKey = findViewById(R.id.btnDisableApiKey)
         tvMgmtKeyStatus = findViewById(R.id.tvMgmtKeyStatus)
         tvMgmtKeyValue = findViewById(R.id.tvMgmtKeyValue)
         btnCopyMgmtKey = findViewById(R.id.btnCopyMgmtKey)
         btnEditMgmtKey = findViewById(R.id.btnEditMgmtKey)
-        btnTestModels = findViewById(R.id.btnTestModels)
-        btnTestHealthz = findViewById(R.id.btnTestHealthz)
 
         val configDir = "${noBackupFilesDir.absolutePath}/cliproxy"
-        tvDataDir.text = "数据目录: $configDir"
+        tvDataDir.text = getString(R.string.data_directory, configDir)
 
         updateLocalIp()
         refreshAuthSettingsUI()
+
+        btnLanguage.setOnClickListener {
+            val nextLanguage = if (AppLanguage.get(this) == AppLanguage.CHINESE) {
+                AppLanguage.ENGLISH
+            } else {
+                AppLanguage.CHINESE
+            }
+            AppLanguage.set(this, nextLanguage)
+            recreate()
+        }
 
         btnToggle.setOnClickListener {
             if (isRunning) {
@@ -104,14 +132,26 @@ class MainActivity : AppCompatActivity() {
 
         btnCopyLocalhost.setOnClickListener {
             val apiUrl = "http://127.0.0.1:8317/v1"
-            copyToClipboard("CLIProxy 本机地址", apiUrl)
-            Toast.makeText(this, "已复制本机地址: $apiUrl", Toast.LENGTH_SHORT).show()
+            copyToClipboard(getString(R.string.clipboard_local_address), apiUrl)
+            Toast.makeText(this, getString(R.string.toast_local_address_copied, apiUrl), Toast.LENGTH_SHORT).show()
         }
 
         btnCopyLan.setOnClickListener {
             val apiUrl = "http://$localIp:8317/v1"
-            copyToClipboard("CLIProxy 局域网地址", apiUrl)
-            Toast.makeText(this, "已复制局域网地址: $apiUrl", Toast.LENGTH_SHORT).show()
+            copyToClipboard(getString(R.string.clipboard_lan_address), apiUrl)
+            Toast.makeText(this, getString(R.string.toast_lan_address_copied, apiUrl), Toast.LENGTH_SHORT).show()
+        }
+
+        btnCopyClaudeLocalhost.setOnClickListener {
+            val apiUrl = "http://127.0.0.1:8317"
+            copyToClipboard(getString(R.string.clipboard_claude_local_address), apiUrl)
+            Toast.makeText(this, getString(R.string.toast_local_address_copied, apiUrl), Toast.LENGTH_SHORT).show()
+        }
+
+        btnCopyClaudeLan.setOnClickListener {
+            val apiUrl = "http://$localIp:8317"
+            copyToClipboard(getString(R.string.clipboard_claude_lan_address), apiUrl)
+            Toast.makeText(this, getString(R.string.toast_lan_address_copied, apiUrl), Toast.LENGTH_SHORT).show()
         }
 
         btnOpenWeb.setOnClickListener {
@@ -120,35 +160,36 @@ class MainActivity : AppCompatActivity() {
 
         btnCopyKey.setOnClickListener {
             currentApiKey?.let { key ->
-                copyToClipboard("CLIProxy API Key", key)
-                Toast.makeText(this, "API Key 已复制到剪贴板", Toast.LENGTH_SHORT).show()
+                copyToClipboard(getString(R.string.clipboard_api_key), key)
+                Toast.makeText(this, R.string.toast_api_key_copied, Toast.LENGTH_SHORT).show()
             }
         }
 
-        btnToggleAuthMode.setOnClickListener {
-            toggleAuthMode(configDir)
+        btnSaveApiKey.setOnClickListener {
+            val newKey = etApiKey.text?.toString()?.trim().orEmpty()
+            if (newKey.isBlank()) {
+                etApiKey.error = getString(R.string.api_key_required)
+            } else {
+                saveApiKey(newKey, configDir, generated = false)
+            }
+        }
+
+        btnGenerateApiKey.setOnClickListener {
+            val newKey = "cpa-" + generateRandomHex(16)
+            saveApiKey(newKey, configDir, generated = true)
+        }
+
+        btnDisableApiKey.setOnClickListener {
+            saveApiKey(null, configDir, generated = false)
         }
 
         btnCopyMgmtKey.setOnClickListener {
-            copyToClipboard("CLIProxy 管理密钥", currentMgmtKey)
-            Toast.makeText(this, "管理密钥已复制: $currentMgmtKey", Toast.LENGTH_SHORT).show()
+            copyToClipboard(getString(R.string.clipboard_management_key), currentMgmtKey)
+            Toast.makeText(this, getString(R.string.toast_management_key_copied, currentMgmtKey), Toast.LENGTH_SHORT).show()
         }
 
         btnEditMgmtKey.setOnClickListener {
             showEditManagementKeyDialog(configDir)
-        }
-
-        btnTestModels.setOnClickListener {
-            val url = if (currentApiKey.isNullOrBlank()) {
-                "http://127.0.0.1:8317/v1/models"
-            } else {
-                "http://127.0.0.1:8317/v1/models?key=$currentApiKey"
-            }
-            openUrlInBrowser(url)
-        }
-
-        btnTestHealthz.setOnClickListener {
-            openUrlInBrowser("http://127.0.0.1:8317/healthz")
         }
 
         checkNotificationPermission()
@@ -179,14 +220,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateLocalIp() {
         localIp = detectLocalIpAddress()
-        tvEndpointLocal.text = "本机地址: http://127.0.0.1:8317/v1"
-        tvEndpointLan.text = "局域网地址: http://$localIp:8317/v1"
+        tvEndpointLocal.text = getString(R.string.local_address, "http://127.0.0.1:8317/v1")
+        tvEndpointLan.text = getString(R.string.lan_address, "http://$localIp:8317/v1")
+        tvClaudeEndpointLocal.text = getString(R.string.local_address, "http://127.0.0.1:8317")
+        tvClaudeEndpointLan.text = getString(R.string.lan_address, "http://$localIp:8317")
     }
 
     private fun detectLocalIpAddress(): String {
         try {
             val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
-            // 优先查找物理 Wi-Fi / 以太网私有 IP (192.168.x / 10.x / 172.16-31.x 排除 VPN)
+            // Prefer physical Wi-Fi or Ethernet private addresses and exclude VPN interfaces.
             for (intf in interfaces) {
                 if (intf.isLoopback || !intf.isUp) continue
                 val name = intf.name.lowercase()
@@ -201,7 +244,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-            // 次选任意非回环 IPv4
+            // Fall back to any non-loopback IPv4 address.
             for (intf in interfaces) {
                 if (intf.isLoopback || !intf.isUp) continue
                 for (addr in Collections.list(intf.inetAddresses)) {
@@ -269,7 +312,7 @@ class MainActivity : AppCompatActivity() {
         val input = android.widget.EditText(this).apply {
             setText(currentKey)
             setSelection(currentKey.length)
-            hint = "请输入新的管理密钥"
+            hint = getString(R.string.management_key_hint)
             setTextColor(Color.WHITE)
             setHintTextColor(Color.GRAY)
         }
@@ -280,10 +323,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("修改 WebUI 管理密钥")
-            .setMessage("用于浏览器访问 WebUI 控制台的登录密码:")
+            .setTitle(R.string.edit_management_key_title)
+            .setMessage(R.string.edit_management_key_message)
             .setView(container)
-            .setPositiveButton("保存并重启") { _, _ ->
+            .setPositiveButton(R.string.save_and_restart) { _, _ ->
                 val newKey = input.text.toString().trim()
                 if (newKey.isNotEmpty()) {
                     saveManagementKey(newKey)
@@ -295,28 +338,30 @@ class MainActivity : AppCompatActivity() {
                             startProxy(configDir)
                         }
                     }
-                    Toast.makeText(this, "管理密钥已更新: $newKey", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.toast_management_key_updated, newKey), Toast.LENGTH_SHORT).show()
                 }
             }
-            .setNegativeButton("取消", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
     private fun refreshAuthSettingsUI() {
         currentApiKey = loadApiKeyFromConfigFile()
         if (currentApiKey.isNullOrBlank()) {
-            tvApiKeyStatus.text = "当前: 免密模式"
+            tvApiKeyStatus.setText(R.string.auth_mode_keyless)
             tvApiKeyStatus.setTextColor(Color.parseColor("#34D399"))
-            tvApiKeyValue.text = "无需 API Key"
+            etApiKey.setText("")
             btnCopyKey.isEnabled = false
-            btnToggleAuthMode.text = "启用密钥保护"
+            btnDisableApiKey.isEnabled = false
         } else {
-            tvApiKeyStatus.text = "当前: 已启用密钥验证"
+            tvApiKeyStatus.setText(R.string.auth_mode_protected)
             tvApiKeyStatus.setTextColor(Color.parseColor("#38BDF8"))
-            tvApiKeyValue.text = currentApiKey
+            etApiKey.setText(currentApiKey)
+            etApiKey.setSelection(etApiKey.text?.length ?: 0)
             btnCopyKey.isEnabled = true
-            btnToggleAuthMode.text = "切换为免密访问"
+            btnDisableApiKey.isEnabled = true
         }
+        etApiKey.error = null
 
         currentMgmtKey = loadManagementKey()
         tvMgmtKeyValue.text = currentMgmtKey
@@ -328,17 +373,20 @@ class MainActivity : AppCompatActivity() {
         return try {
             val lines = file.readLines()
             for (i in lines.indices) {
-                val line = lines[i].trim()
-                if (line.startsWith("api-keys:")) {
-                    if (line == "api-keys: []") return null
+                val rawLine = lines[i]
+                val line = rawLine.trim()
+                if (rawLine.isNotBlank() && !rawLine.first().isWhitespace() && line.startsWith("api-keys:")) {
+                    val inlineValue = line.substringAfter(':').trim()
+                    if (inlineValue == "[]") return null
                     for (j in (i + 1) until lines.size) {
-                        val subLine = lines[j].trim()
-                        if (subLine.startsWith("-")) {
-                            val key = subLine.removePrefix("-").trim()
-                                .removeSurrounding("\"").removeSurrounding("'")
-                            if (key.isNotBlank()) return key
-                        } else if (subLine.isNotEmpty() && !subLine.startsWith("#")) {
+                        val rawSubLine = lines[j]
+                        val subLine = rawSubLine.trim()
+                        if (rawSubLine.isNotBlank() && !rawSubLine.first().isWhitespace() && !subLine.startsWith("#")) {
                             break
+                        }
+                        if (subLine.startsWith("-")) {
+                            val key = decodeYamlScalar(subLine.removePrefix("-").trim())
+                            if (key.isNotBlank()) return key
                         }
                     }
                 }
@@ -349,28 +397,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun toggleAuthMode(configDir: String) {
+    private fun saveApiKey(newKey: String?, configDir: String, generated: Boolean) {
         val file = getConfigFile()
-        if (!file.exists()) {
-            File(noBackupFilesDir, "cliproxy").mkdirs()
-            file.createNewFile()
-        }
-
         try {
-            var content = file.readText()
-            if (currentApiKey.isNullOrBlank()) {
-                val newKey = "cpa-" + generateRandomHex(16)
-                content = if (content.contains("api-keys:")) {
-                    content.replace(Regex("""(?m)^api-keys:(\s*(\n\s*-\s*[^\n]+)+|\s*\[\])"""), "api-keys:\n  - \"$newKey\"")
-                } else {
-                    "$content\napi-keys:\n  - \"$newKey\"\n"
-                }
-                file.writeText(content)
-                Toast.makeText(this, "已生成 API Key: $newKey", Toast.LENGTH_LONG).show()
+            file.parentFile?.mkdirs()
+            val content = if (file.exists()) file.readText() else ""
+            val updatedContent = updateApiKeysSection(content, newKey)
+            writeConfigAtomically(file, updatedContent)
+
+            if (newKey == null) {
+                Toast.makeText(this, R.string.toast_switched_to_keyless, Toast.LENGTH_SHORT).show()
+            } else if (generated) {
+                Toast.makeText(this, R.string.toast_api_key_generated, Toast.LENGTH_SHORT).show()
             } else {
-                content = content.replace(Regex("""(?m)^api-keys:(\s*(\n\s*-\s*[^\n]+)+|\s*\[\])"""), "api-keys: []")
-                file.writeText(content)
-                Toast.makeText(this, "已切换为免密模式，重启生效", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.toast_api_key_saved, Toast.LENGTH_SHORT).show()
             }
 
             refreshAuthSettingsUI()
@@ -383,7 +423,89 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         } catch (e: Exception) {
-            Toast.makeText(this, "修改配置失败: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.toast_config_update_failed, e.message), Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun updateApiKeysSection(content: String, apiKey: String?): String {
+        val lineEnding = if (content.contains("\r\n")) "\r\n" else "\n"
+        val hadTrailingLineEnding = content.endsWith("\n")
+        val lines = content.split(Regex("\r?\n")).toMutableList()
+        val sectionIndex = lines.indexOfFirst { line ->
+            line.isNotBlank() && !line.first().isWhitespace() && line.trim().startsWith("api-keys:")
+        }
+        val sectionHeader = if (apiKey == null) "api-keys: []" else "api-keys:"
+
+        if (sectionIndex == -1) {
+            val prefix = when {
+                content.isEmpty() -> ""
+                content.endsWith("\n") -> ""
+                else -> lineEnding
+            }
+            val keyLine = apiKey?.let { "$lineEnding  - ${encodeYamlScalar(it)}" }.orEmpty()
+            return "$content$prefix$sectionHeader$keyLine$lineEnding"
+        }
+
+        lines[sectionIndex] = sectionHeader
+        var cursor = sectionIndex + 1
+        while (cursor < lines.size) {
+            val line = lines[cursor]
+            val trimmed = line.trim()
+            if (line.isNotBlank() && !line.first().isWhitespace() && !trimmed.startsWith("#")) {
+                break
+            }
+            if (trimmed.startsWith("-")) {
+                lines.removeAt(cursor)
+            } else {
+                cursor++
+            }
+        }
+        if (apiKey != null) {
+            lines.add(sectionIndex + 1, "  - ${encodeYamlScalar(apiKey)}")
+        }
+
+        val updated = lines.joinToString(lineEnding)
+        return if (hadTrailingLineEnding && !updated.endsWith(lineEnding)) updated + lineEnding else updated
+    }
+
+    private fun encodeYamlScalar(value: String): String {
+        val escaped = value
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\t", "\\t")
+        return "\"$escaped\""
+    }
+
+    private fun decodeYamlScalar(value: String): String {
+        if (value.length < 2) return value
+        return when {
+            value.startsWith("\"") && value.endsWith("\"") -> value.substring(1, value.length - 1)
+                .replace("\\t", "\t")
+                .replace("\\\"", "\"")
+                .replace("\\\\", "\\")
+            value.startsWith("'") && value.endsWith("'") -> value.substring(1, value.length - 1)
+                .replace("''", "'")
+            else -> value
+        }
+    }
+
+    private fun writeConfigAtomically(file: File, content: String) {
+        val parent = requireNotNull(file.parentFile)
+        val temporaryFile = File.createTempFile("config-", ".yaml.tmp", parent)
+        try {
+            temporaryFile.writeText(content)
+            try {
+                Files.move(
+                    temporaryFile.toPath(),
+                    file.toPath(),
+                    StandardCopyOption.ATOMIC_MOVE,
+                    StandardCopyOption.REPLACE_EXISTING
+                )
+            } catch (_: Exception) {
+                Files.move(temporaryFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            }
+        } finally {
+            if (temporaryFile.exists()) temporaryFile.delete()
         }
     }
 
@@ -476,15 +598,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateUI(running: Boolean = isRunning, starting: Boolean = false) {
         if (starting) {
-            tvStatus.text = "正在启动..."
-            statusIndicator.setBackgroundColor(Color.parseColor("#F59E0B")) // 橙色
-            btnToggle.text = "启动中..."
+            tvStatus.setText(R.string.status_starting)
+            statusIndicator.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#F59E0B"))
+            btnToggle.setText(R.string.action_starting)
             btnToggle.isEnabled = false
             btnOpenWeb.isEnabled = false
-            btnTestModels.isEnabled = false
-            btnTestHealthz.isEnabled = false
             btnCopyLocalhost.isEnabled = false
             btnCopyLan.isEnabled = false
+            btnCopyClaudeLocalhost.isEnabled = false
+            btnCopyClaudeLan.isEnabled = false
+            btnSaveApiKey.isEnabled = false
+            btnGenerateApiKey.isEnabled = false
+            btnCopyKey.isEnabled = false
+            btnDisableApiKey.isEnabled = false
             btnCopyMgmtKey.isEnabled = false
             btnEditMgmtKey.isEnabled = false
             return
@@ -493,24 +619,26 @@ class MainActivity : AppCompatActivity() {
         btnToggle.isEnabled = true
         btnCopyLocalhost.isEnabled = true
         btnCopyLan.isEnabled = true
+        btnCopyClaudeLocalhost.isEnabled = true
+        btnCopyClaudeLan.isEnabled = true
+        btnSaveApiKey.isEnabled = true
+        btnGenerateApiKey.isEnabled = true
+        btnCopyKey.isEnabled = !currentApiKey.isNullOrBlank()
+        btnDisableApiKey.isEnabled = !currentApiKey.isNullOrBlank()
         btnCopyMgmtKey.isEnabled = true
         btnEditMgmtKey.isEnabled = true
         if (running) {
-            tvStatus.text = "运行中"
-            statusIndicator.setBackgroundColor(Color.parseColor("#10B981")) // 绿色
-            btnToggle.text = "停止服务"
-            btnToggle.setBackgroundColor(Color.parseColor("#EF4444")) // 红色
+            tvStatus.setText(R.string.status_running)
+            statusIndicator.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#10B981"))
+            btnToggle.setText(R.string.action_stop)
+            btnToggle.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#EF4444"))
             btnOpenWeb.isEnabled = true
-            btnTestModels.isEnabled = true
-            btnTestHealthz.isEnabled = true
         } else {
-            tvStatus.text = "已停止"
-            statusIndicator.setBackgroundColor(Color.parseColor("#64748B")) // 灰色
-            btnToggle.text = "启动服务"
-            btnToggle.setBackgroundColor(Color.parseColor("#2563EB")) // 蓝色
+            tvStatus.setText(R.string.status_stopped)
+            statusIndicator.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#64748B"))
+            btnToggle.setText(R.string.action_start)
+            btnToggle.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#2563EB"))
             btnOpenWeb.isEnabled = false
-            btnTestModels.isEnabled = false
-            btnTestHealthz.isEnabled = false
         }
     }
 }

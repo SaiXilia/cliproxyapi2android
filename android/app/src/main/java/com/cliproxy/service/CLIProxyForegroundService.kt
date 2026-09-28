@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import com.cliproxy.CLIProxy
@@ -34,6 +35,7 @@ class CLIProxyForegroundService : Service() {
 
         private const val NOTIFICATION_ID = 8317
         private const val CHANNEL_ID = "cliproxy_service_channel_v2"
+        private const val TAG = "CLIProxyService"
     }
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -45,20 +47,26 @@ class CLIProxyForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val action = intent?.action ?: ACTION_START
-
-        if (action == ACTION_STOP) {
-            stopProxyService()
-            return START_NOT_STICKY
+        when (intent?.action) {
+            ACTION_STOP -> {
+                stopProxyService()
+                return START_NOT_STICKY
+            }
+            ACTION_START -> Unit
+            else -> {
+                // A null intent is an Android service recreation, not a user start request.
+                stopSelf(startId)
+                return START_NOT_STICKY
+            }
         }
 
-        val configDir = intent?.getStringExtra(EXTRA_CONFIG_DIR)
+        val configDir = intent.getStringExtra(EXTRA_CONFIG_DIR)
             ?: "${noBackupFilesDir.absolutePath}/cliproxy"
-        val host = intent?.getStringExtra(EXTRA_HOST) ?: "0.0.0.0"
-        val port = intent?.getIntExtra(EXTRA_PORT, 8317) ?: 8317
+        val host = intent.getStringExtra(EXTRA_HOST) ?: "0.0.0.0"
+        val port = intent.getIntExtra(EXTRA_PORT, 8317)
 
         acquireWakeLock()
-        startForegroundNotification()
+        startForegroundNotification("CLIProxy API 正在启动")
 
         serviceScope.launch {
             val res = CLIProxy.startServer(configDir, host, port)
@@ -67,8 +75,23 @@ class CLIProxyForegroundService : Service() {
                 return@launch
             }
 
-            // 轮询 OAuth 授权 URL 并自动拉起浏览器
+            var runningNotificationShown = false
+
+            // Poll OAuth authorization URLs and keep the notification synchronized with the native server.
             while (isActive) {
+                when (CLIProxy.getServerStatus()) {
+                    CLIProxy.STATUS_RUNNING -> {
+                        if (!runningNotificationShown) {
+                            updateForegroundNotification("CLIProxy API 正在运行")
+                            runningNotificationShown = true
+                        }
+                    }
+                    CLIProxy.STATUS_STOPPED, CLIProxy.STATUS_FAILED -> {
+                        stopProxyService()
+                        return@launch
+                    }
+                }
+
                 val url = CLIProxy.pollOAuthURL(1000)
                 if (!url.isNullOrBlank()) {
                     try {
@@ -77,38 +100,45 @@ class CLIProxyForegroundService : Service() {
                         }
                         startActivity(browserIntent)
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        Log.e(TAG, "Failed to open OAuth authorization URL", e)
                     }
                 }
             }
         }
 
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
-    private fun startForegroundNotification() {
+    private fun buildNotification(title: String) = NotificationCompat.Builder(this, CHANNEL_ID)
+        .setContentTitle(title)
+        .setSmallIcon(com.cliproxy.R.drawable.ic_proxy_running)
+        .setContentIntent(createMainPendingIntent())
+        .setPriority(NotificationCompat.PRIORITY_HIGH)
+        .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+        .setOngoing(true)
+        .build()
+
+    private fun createMainPendingIntent(): PendingIntent {
         val mainIntent = Intent(this, MainActivity::class.java)
-        val mainPendingIntent = PendingIntent.getActivity(
+        return PendingIntent.getActivity(
             this, 0, mainIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+    }
 
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("CLIProxy API 正在运行")
-            .setSmallIcon(com.cliproxy.R.drawable.ic_proxy_running)
-            .setContentIntent(mainPendingIntent)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setOngoing(true)
-            .build()
-
+    private fun startForegroundNotification(title: String) {
         val foregroundType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
         } else {
             0
         }
 
-        ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, foregroundType)
+        ServiceCompat.startForeground(this, NOTIFICATION_ID, buildNotification(title), foregroundType)
+    }
+
+    private fun updateForegroundNotification(title: String) {
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(NOTIFICATION_ID, buildNotification(title))
     }
 
     private fun createNotificationChannel() {
@@ -158,7 +188,7 @@ class CLIProxyForegroundService : Service() {
         CLIProxy.stopServer()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
-        // 严格遵循单会话进程契约：独立 :proxy 进程受控自退出，彻底回收全部 Go Runtime 单例与资源
+        // The dedicated :proxy process exits after each session to release all Go runtime state.
         exitProcess(0)
     }
 
