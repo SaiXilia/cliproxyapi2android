@@ -70,3 +70,4 @@ docker-compose.override.yml
 
 # Build artifacts
 dist/
+screenshot.png
