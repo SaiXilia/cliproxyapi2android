@@ -5,10 +5,10 @@
 
     <string name="service_notification_title">CLIProxy API local proxy service</string>
     <string name="service_notification_running">Service running at http://127.0.0.1:8317</string>
-    <string name="action_stop">Stop service</string>
-    <string name="action_start">Start service</string>
+    <string name="action_stop">Stop</string>
+    <string name="action_start">Start</string>
     <string name="action_starting">Starting…</string>
-    <string name="action_open_web">Open management console (Web)</string>
+    <string name="action_open_web">Console</string>
     <string name="status_running">Running</string>
     <string name="status_stopped">Stopped</string>
     <string name="status_starting">Starting…</string>
@@ -64,7 +64,7 @@
     <string name="save_and_restart">Save and restart</string>
     <string name="cancel">Cancel</string>
 
-    <string name="open_management_console">Open management console</string>
+    <string name="open_management_console">Console</string>
 
     <string name="update_card_title">App and proxy core updates</string>
     <string name="app_version_loading">App version: Loading…</string>
