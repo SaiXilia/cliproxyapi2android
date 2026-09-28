@@ -53,7 +53,7 @@ var (
 func init() {
 	serverStatus.Store(StatusStopped)
 
-	// 挂载移动端双轨 OAuth 拦截器
+	// Install the mobile dual-path OAuth interceptor.
 	browser.SetURLHandler(func(url string) error {
 		select {
 		case oauthChan <- url:
@@ -91,14 +91,14 @@ func getOrInitManagementKey(configDir string) string {
 
 func ensureInitialConfigFile(cfgPath, host string, port int, authDir string, mgmtKey string) error {
 	if _, err := os.Stat(cfgPath); err == nil {
-		return nil // 配置文件已存在，不覆盖
+		return nil // Preserve an existing configuration file.
 	}
 
 	initialConfig := map[string]any{
-		"host":     "0.0.0.0",
+		"host":     host,
 		"port":     port,
 		"auth-dir": authDir,
-		"api-keys": []string{}, // 默认免密模式，便于手机端浏览器与各类客户端开箱即用
+		"api-keys": []string{}, // Default to keyless access for mobile browsers and clients.
 		"remote-management": map[string]any{
 			"allow-remote": true,
 			"secret-key":   mgmtKey,
@@ -129,7 +129,7 @@ func ensureInitialManagementAsset(staticDir string) {
 	}
 }
 
-// 启动移动端代理服务。返回值: 1 成功受理启动, 0 已经在运行中, -1 参数或初始化失败
+// StartServer starts the mobile proxy. It returns 1 when accepted, 0 when already active, and -1 on invalid input or initialization failure.
 //
 //export StartServer
 func StartServer(cConfigDir *C.char, cHost *C.char, port C.int) C.int {
@@ -138,7 +138,7 @@ func StartServer(cConfigDir *C.char, cHost *C.char, port C.int) C.int {
 
 	current := serverStatus.Load()
 	if current == StatusStarting || current == StatusRunning {
-		return 0 // 已处于活跃状态
+		return 0 // The server is already active.
 	}
 
 	if cConfigDir == nil {
@@ -157,7 +157,7 @@ func StartServer(cConfigDir *C.char, cHost *C.char, port C.int) C.int {
 		targetPort = 8317
 	}
 
-	host := "0.0.0.0"
+	host := "127.0.0.1"
 	if cHost != nil {
 		if h := strings.TrimSpace(C.GoString(cHost)); h != "" {
 			host = h
@@ -166,11 +166,11 @@ func StartServer(cConfigDir *C.char, cHost *C.char, port C.int) C.int {
 
 	serverStatus.Store(StatusStarting)
 
-	// 确保管理密钥并注入环境变量与选项
+	// Ensure the management key and expose it to the runtime configuration.
 	mgmtKey := getOrInitManagementKey(configDir)
 	_ = os.Setenv("MANAGEMENT_PASSWORD", mgmtKey)
 
-	// 1. 确保运行目录与初始配置落盘
+	// 1. Ensure runtime directories and the initial configuration exist.
 	authDir := filepath.Join(configDir, "auths")
 	if errAuthDir := os.MkdirAll(authDir, 0700); errAuthDir != nil {
 		log.Errorf("mobile start: failed to create auths directory: %v", errAuthDir)
@@ -186,7 +186,7 @@ func StartServer(cConfigDir *C.char, cHost *C.char, port C.int) C.int {
 	}
 	ensureInitialManagementAsset(filepath.Join(configDir, "static"))
 
-	// 2. 加载配置对象并强制移动端策略
+	// 2. Load the configuration and apply mobile runtime policy.
 	cfg, errLoad := config.LoadConfigOptional(cfgPath, false)
 	if errLoad != nil || cfg == nil {
 		cfg = &config.Config{
@@ -197,10 +197,10 @@ func StartServer(cConfigDir *C.char, cHost *C.char, port C.int) C.int {
 	cfg.Host = host
 	cfg.Port = targetPort
 	cfg.AuthDir = authDir
-	cfg.Home = config.HomeConfig{} // 强制清空分布式 Home 配置，确保纯本地单机模式
+	cfg.Home = config.HomeConfig{} // Disable distributed Home configuration for local standalone mode.
 	cfg.NormalizePluginsConfig()
 
-	// 3. 构建核心服务
+	// 3. Build the core service.
 	builder := cliproxy.NewBuilder().
 		WithConfig(cfg).
 		WithConfigPath(cfgPath).
@@ -219,14 +219,14 @@ func StartServer(cConfigDir *C.char, cHost *C.char, port C.int) C.int {
 	sessionCancel = cancel
 	sessionDoneCh = doneCh
 
-	// 4. 显式启动后台自更新器 (由本运行会话 context 托管)
+	// 4. Start background updaters under the current session context.
 	managementasset.StartAutoUpdater(sessionCtx, cfgPath)
 	misc.StartAntigravityVersionUpdater(sessionCtx)
 	registry.StartModelsUpdater(sessionCtx)
 	registry.StartCodexClientModelsUpdater(sessionCtx)
 	registry.StartDevinModelsUpdater(sessionCtx)
 
-	// 5. 启动服务主运行协程
+	// 5. Start the main service goroutine.
 	go func() {
 		defer close(doneCh)
 		serverStatus.Store(StatusRunning)
@@ -242,7 +242,7 @@ func StartServer(cConfigDir *C.char, cHost *C.char, port C.int) C.int {
 	return 1
 }
 
-// 停止服务并等待其完成资源回收
+// StopServer stops the service and waits for resource cleanup.
 //
 //export StopServer
 func StopServer() {
@@ -272,14 +272,14 @@ func StopServer() {
 	serverStatus.Store(StatusStopped)
 }
 
-// 返回当前服务运行状态码
+// GetServerStatus returns the current service status code.
 //
 //export GetServerStatus
 func GetServerStatus() C.int {
 	return C.int(serverStatus.Load())
 }
 
-// 供 Android Kotlin 协程在后台工作线程轮询拉取 OAuth 授权 URL
+// PollOAuthURL lets the Android coroutine poll OAuth authorization URLs on a background thread.
 //
 //export PollOAuthURL
 func PollOAuthURL(timeoutMs C.int) *C.char {
@@ -292,7 +292,7 @@ func PollOAuthURL(timeoutMs C.int) *C.char {
 	}
 }
 
-// 释放 CString 堆内存
+// FreeCString releases heap memory owned by a CString.
 //
 //export FreeCString
 func FreeCString(ptr *C.char) {

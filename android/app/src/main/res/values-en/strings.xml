@@ -16,19 +16,15 @@
     <string name="service_card_title">Service status</string>
 
     <string name="connection_addresses_title">Connection addresses</string>
-    <string name="connection_addresses_description">Choose the Base URL that matches your client protocol</string>
+    <string name="connection_addresses_description">Local access only; choose the Base URL that matches your client protocol</string>
     <string name="openai_compatible_base_url">OpenAI-compatible Base URL</string>
     <string name="claude_compatible_base_url">Claude-compatible Base URL</string>
     <string name="local_address">Local address: %1$s</string>
-    <string name="lan_address">LAN address: %1$s</string>
     <string name="local_address_loading">Local address: http://127.0.0.1:8317/v1</string>
-    <string name="lan_address_loading">LAN address: http://127.0.0.1:8317/v1</string>
     <string name="claude_local_address_loading">Local address: http://127.0.0.1:8317</string>
-    <string name="claude_lan_address_loading">LAN address: http://127.0.0.1:8317</string>
     <string name="data_directory">Data directory: %1$s</string>
     <string name="data_directory_loading">Data directory: Loading…</string>
     <string name="copy_local_address">Copy local address</string>
-    <string name="copy_lan_address">Copy LAN address</string>
 
     <string name="api_authentication_title">API access authentication</string>
     <string name="api_authentication_description">Enter your own key or generate a secure random key</string>
@@ -56,16 +52,13 @@
 
     <string name="open_management_console">Open management console</string>
     <string name="network_vpn_title">Network and VPN compatibility</string>
-    <string name="network_vpn_description">• Clients on this device should use the matching 127.0.0.1 address shown above. Other devices on the LAN should use the matching LAN address shown above.\n• If local access stops working after enabling VPN or proxy software, make sure local destinations are routed directly, including 127.0.0.0/8 and the current LAN subnet. Use Bypass LAN, per-app proxy bypass, or custom routing rules; labels vary by app.\n• Per-app bypass sends all traffic from the selected client outside the VPN. Enable it only when needed.</string>
+    <string name="network_vpn_description">• The service listens only on 127.0.0.1. It is available to clients on this device and cannot be reached from other LAN devices.\n• If access stops working after enabling VPN or proxy software, enable Bypass local addresses or Bypass LAN in its core settings. You can also exclude the client with per-app proxy settings or add a direct routing rule for 127.0.0.0/8.\n• Per-app bypass sends all traffic from the selected client outside the VPN. Enable it only when needed.</string>
 
     <string name="clipboard_local_address">CLIProxy local address</string>
-    <string name="clipboard_lan_address">CLIProxy LAN address</string>
     <string name="clipboard_claude_local_address">CLIProxy Claude local address</string>
-    <string name="clipboard_claude_lan_address">CLIProxy Claude LAN address</string>
     <string name="clipboard_api_key">CLIProxy API key</string>
     <string name="clipboard_management_key">CLIProxy management key</string>
     <string name="toast_local_address_copied">Local address copied: %1$s</string>
-    <string name="toast_lan_address_copied">LAN address copied: %1$s</string>
     <string name="toast_api_key_copied">API key copied to the clipboard</string>
     <string name="toast_management_key_copied">Management key copied: %1$s</string>
     <string name="toast_management_key_updated">Management key updated: %1$s</string>

@@ -150,7 +150,7 @@ jobs:
             ### 🌟 Key Features
             - **16KB Memory Page Alignment**: Strictly compliant with Android 14 / 15+ kernels.
             - **Anti-Freeze & Anti-Sleep**: Hardware-level `PARTIAL_WAKE_LOCK` + `START_STICKY` service survival against Xiaomi HyperOS / ColorOS / OneUI tombstoning.
-            - **Full Interface Binding & VPN Compatibility**: Listens on `0.0.0.0`, allowing clients to connect directly via `127.0.0.1:8317` without VPN loopback conflicts, or share across Wi-Fi LAN IP.
+            - **Local Loopback Binding & VPN Compatibility**: Listens on `127.0.0.1:8317`, allowing clients to connect directly without VPN loopback conflicts or external exposure risks.
             - **Bidirectional Protocol Translation**: Transparent conversion between OpenAI ⇄ Claude ⇄ Gemini ⇄ Codex.
             - **Extended Thinking**: Preserves Claude Extended Thinking (`budget_tokens`), Gemini thinking configurations, and OpenAI reasoning effort.
             - **Built-in Offline WebUI**: Embedded visual management console accessible via `http://127.0.0.1:8317/management.html`.

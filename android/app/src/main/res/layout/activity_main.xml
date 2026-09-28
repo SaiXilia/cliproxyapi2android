@@ -204,55 +204,19 @@
                     android:textIsSelectable="true"
                     android:textSize="12sp" />
 
-                <TextView
-                    android:id="@+id/tvEndpointLan"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCopyLocalhost"
+                    style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:fontFamily="monospace"
-                    android:text="@string/lan_address_loading"
-                    android:textColor="@color/text_primary"
-                    android:textIsSelectable="true"
-                    android:textSize="12sp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="42dp"
                     android:layout_marginTop="11dp"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnCopyLocalhost"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="0dp"
-                        android:layout_height="42dp"
-                        android:layout_marginEnd="5dp"
-                        android:layout_weight="1"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:minHeight="42dp"
-                        android:singleLine="true"
-                        android:text="@string/copy_local_address"
-                        android:textSize="11sp"
-                        app:cornerRadius="12dp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnCopyLan"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="42dp"
-                        android:layout_marginStart="5dp"
-                        android:layout_weight="1"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:minHeight="42dp"
-                        android:singleLine="true"
-                        android:text="@string/copy_lan_address"
-                        android:textColor="@color/accent_blue"
-                        android:textSize="11sp"
-                        app:cornerRadius="12dp"
-                        app:strokeColor="@color/card_stroke" />
-                </LinearLayout>
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minHeight="42dp"
+                    android:singleLine="true"
+                    android:text="@string/copy_local_address"
+                    android:textSize="11sp"
+                    app:cornerRadius="12dp" />
 
                 <View
                     android:layout_width="match_parent"
@@ -280,55 +244,19 @@
                     android:textIsSelectable="true"
                     android:textSize="12sp" />
 
-                <TextView
-                    android:id="@+id/tvClaudeEndpointLan"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCopyClaudeLocalhost"
+                    style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:fontFamily="monospace"
-                    android:text="@string/claude_lan_address_loading"
-                    android:textColor="@color/text_primary"
-                    android:textIsSelectable="true"
-                    android:textSize="12sp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="42dp"
                     android:layout_marginTop="11dp"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnCopyClaudeLocalhost"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="0dp"
-                        android:layout_height="42dp"
-                        android:layout_marginEnd="5dp"
-                        android:layout_weight="1"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:minHeight="42dp"
-                        android:singleLine="true"
-                        android:text="@string/copy_local_address"
-                        android:textSize="11sp"
-                        app:cornerRadius="12dp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnCopyClaudeLan"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="42dp"
-                        android:layout_marginStart="5dp"
-                        android:layout_weight="1"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:minHeight="42dp"
-                        android:singleLine="true"
-                        android:text="@string/copy_lan_address"
-                        android:textColor="@color/accent_blue"
-                        android:textSize="11sp"
-                        app:cornerRadius="12dp"
-                        app:strokeColor="@color/card_stroke" />
-                </LinearLayout>
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minHeight="42dp"
+                    android:singleLine="true"
+                    android:text="@string/copy_local_address"
+                    android:textSize="11sp"
+                    app:cornerRadius="12dp" />
 
                 <TextView
                     android:id="@+id/tvDataDir"

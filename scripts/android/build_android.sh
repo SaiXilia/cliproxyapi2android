@@ -3,16 +3,19 @@ set -euo pipefail
 
 # 1. 自动寻找或检查 Android NDK
 if [ -z "${ANDROID_NDK_HOME:-}" ]; then
-    if [ -d "C:/Android/Sdk/ndk/29.0.14206865" ]; then
-        export ANDROID_NDK_HOME="C:/Android/Sdk/ndk/29.0.14206865"
+    if [ -n "${ANDROID_HOME:-}" ] && [ -d "$ANDROID_HOME/ndk" ]; then
+        latest_ndk=$(ls -d "$ANDROID_HOME/ndk"/* 2>/dev/null | sort -V | tail -n 1 || true)
+        [ -n "$latest_ndk" ] && export ANDROID_NDK_HOME="$latest_ndk"
     elif [ -d "$HOME/Android/Sdk/ndk" ]; then
         latest_ndk=$(ls -d "$HOME/Android/Sdk/ndk"/* 2>/dev/null | sort -V | tail -n 1 || true)
-        export ANDROID_NDK_HOME="$latest_ndk"
-    else
-        echo "ERROR: ANDROID_NDK_HOME is not set!"
-        echo "Please export ANDROID_NDK_HOME=/path/to/android-ndk"
-        exit 1
+        [ -n "$latest_ndk" ] && export ANDROID_NDK_HOME="$latest_ndk"
     fi
+fi
+
+if [ -z "${ANDROID_NDK_HOME:-}" ]; then
+    echo "ERROR: ANDROID_NDK_HOME is not set!"
+    echo "Please set ANDROID_NDK_HOME or ANDROID_HOME environment variable."
+    exit 1
 fi
 
 # 2. 自动检测宿主操作系统

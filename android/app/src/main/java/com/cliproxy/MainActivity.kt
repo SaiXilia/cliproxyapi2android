@@ -29,30 +29,23 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.HttpURLConnection
-import java.net.Inet4Address
-import java.net.NetworkInterface
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.security.SecureRandom
-import java.util.Collections
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var btnLanguage: MaterialButton
     private lateinit var tvStatus: TextView
     private lateinit var tvEndpointLocal: TextView
-    private lateinit var tvEndpointLan: TextView
     private lateinit var tvDataDir: TextView
     private lateinit var statusIndicator: View
     private lateinit var btnToggle: MaterialButton
     private lateinit var btnOpenWeb: MaterialButton
     private lateinit var btnCopyLocalhost: MaterialButton
-    private lateinit var btnCopyLan: MaterialButton
     private lateinit var tvClaudeEndpointLocal: TextView
-    private lateinit var tvClaudeEndpointLan: TextView
     private lateinit var btnCopyClaudeLocalhost: MaterialButton
-    private lateinit var btnCopyClaudeLan: MaterialButton
     private lateinit var tvApiKeyStatus: TextView
     private lateinit var etApiKey: TextInputEditText
     private lateinit var btnSaveApiKey: MaterialButton
@@ -65,7 +58,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnEditMgmtKey: MaterialButton
 
     private var isRunning = false
-    private var localIp: String = "127.0.0.1"
     private var currentApiKey: String? = null
     private var currentMgmtKey: String = "admin8317"
 
@@ -84,17 +76,13 @@ class MainActivity : AppCompatActivity() {
         btnLanguage = findViewById(R.id.btnLanguage)
         tvStatus = findViewById(R.id.tvStatus)
         tvEndpointLocal = findViewById(R.id.tvEndpointLocal)
-        tvEndpointLan = findViewById(R.id.tvEndpointLan)
         tvDataDir = findViewById(R.id.tvDataDir)
         statusIndicator = findViewById(R.id.statusIndicator)
         btnToggle = findViewById(R.id.btnToggle)
         btnOpenWeb = findViewById(R.id.btnOpenWeb)
         btnCopyLocalhost = findViewById(R.id.btnCopyLocalhost)
-        btnCopyLan = findViewById(R.id.btnCopyLan)
         tvClaudeEndpointLocal = findViewById(R.id.tvClaudeEndpointLocal)
-        tvClaudeEndpointLan = findViewById(R.id.tvClaudeEndpointLan)
         btnCopyClaudeLocalhost = findViewById(R.id.btnCopyClaudeLocalhost)
-        btnCopyClaudeLan = findViewById(R.id.btnCopyClaudeLan)
         tvApiKeyStatus = findViewById(R.id.tvApiKeyStatus)
         etApiKey = findViewById(R.id.etApiKey)
         btnSaveApiKey = findViewById(R.id.btnSaveApiKey)
@@ -109,7 +97,6 @@ class MainActivity : AppCompatActivity() {
         val configDir = "${noBackupFilesDir.absolutePath}/cliproxy"
         tvDataDir.text = getString(R.string.data_directory, configDir)
 
-        updateLocalIp()
         refreshAuthSettingsUI()
 
         btnLanguage.setOnClickListener {
@@ -136,22 +123,10 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, getString(R.string.toast_local_address_copied, apiUrl), Toast.LENGTH_SHORT).show()
         }
 
-        btnCopyLan.setOnClickListener {
-            val apiUrl = "http://$localIp:8317/v1"
-            copyToClipboard(getString(R.string.clipboard_lan_address), apiUrl)
-            Toast.makeText(this, getString(R.string.toast_lan_address_copied, apiUrl), Toast.LENGTH_SHORT).show()
-        }
-
         btnCopyClaudeLocalhost.setOnClickListener {
             val apiUrl = "http://127.0.0.1:8317"
             copyToClipboard(getString(R.string.clipboard_claude_local_address), apiUrl)
             Toast.makeText(this, getString(R.string.toast_local_address_copied, apiUrl), Toast.LENGTH_SHORT).show()
-        }
-
-        btnCopyClaudeLan.setOnClickListener {
-            val apiUrl = "http://$localIp:8317"
-            copyToClipboard(getString(R.string.clipboard_claude_lan_address), apiUrl)
-            Toast.makeText(this, getString(R.string.toast_lan_address_copied, apiUrl), Toast.LENGTH_SHORT).show()
         }
 
         btnOpenWeb.setOnClickListener {
@@ -211,62 +186,6 @@ class MainActivity : AppCompatActivity() {
         } else if (intent.getBooleanExtra("stop_service", false)) {
             stopProxy()
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        updateLocalIp()
-    }
-
-    private fun updateLocalIp() {
-        localIp = detectLocalIpAddress()
-        tvEndpointLocal.text = getString(R.string.local_address, "http://127.0.0.1:8317/v1")
-        tvEndpointLan.text = getString(R.string.lan_address, "http://$localIp:8317/v1")
-        tvClaudeEndpointLocal.text = getString(R.string.local_address, "http://127.0.0.1:8317")
-        tvClaudeEndpointLan.text = getString(R.string.lan_address, "http://$localIp:8317")
-    }
-
-    private fun detectLocalIpAddress(): String {
-        try {
-            val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
-            // Prefer physical Wi-Fi or Ethernet private addresses and exclude VPN interfaces.
-            for (intf in interfaces) {
-                if (intf.isLoopback || !intf.isUp) continue
-                val name = intf.name.lowercase()
-                if (name.contains("tun") || name.contains("dummy") || name.contains("p2p")) continue
-
-                for (addr in Collections.list(intf.inetAddresses)) {
-                    if (!addr.isLoopbackAddress && addr is Inet4Address) {
-                        val host = addr.hostAddress ?: continue
-                        if (host.startsWith("192.168.") || host.startsWith("10.") || isPrivate172(host)) {
-                            return host
-                        }
-                    }
-                }
-            }
-            // Fall back to any non-loopback IPv4 address.
-            for (intf in interfaces) {
-                if (intf.isLoopback || !intf.isUp) continue
-                for (addr in Collections.list(intf.inetAddresses)) {
-                    if (!addr.isLoopbackAddress && addr is Inet4Address) {
-                        return addr.hostAddress ?: continue
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return "127.0.0.1"
-    }
-
-    private fun isPrivate172(ip: String): Boolean {
-        if (!ip.startsWith("172.")) return false
-        val parts = ip.split(".")
-        if (parts.size >= 2) {
-            val second = parts[1].toIntOrNull() ?: return false
-            return second in 16..31
-        }
-        return false
     }
 
     private fun copyToClipboard(label: String, text: String) {
@@ -538,7 +457,7 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, CLIProxyForegroundService::class.java).apply {
             action = CLIProxyForegroundService.ACTION_START
             putExtra(CLIProxyForegroundService.EXTRA_CONFIG_DIR, configDir)
-            putExtra(CLIProxyForegroundService.EXTRA_HOST, "0.0.0.0")
+            putExtra(CLIProxyForegroundService.EXTRA_HOST, "127.0.0.1")
             putExtra(CLIProxyForegroundService.EXTRA_PORT, 8317)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -604,9 +523,7 @@ class MainActivity : AppCompatActivity() {
             btnToggle.isEnabled = false
             btnOpenWeb.isEnabled = false
             btnCopyLocalhost.isEnabled = false
-            btnCopyLan.isEnabled = false
             btnCopyClaudeLocalhost.isEnabled = false
-            btnCopyClaudeLan.isEnabled = false
             btnSaveApiKey.isEnabled = false
             btnGenerateApiKey.isEnabled = false
             btnCopyKey.isEnabled = false
@@ -618,9 +535,7 @@ class MainActivity : AppCompatActivity() {
 
         btnToggle.isEnabled = true
         btnCopyLocalhost.isEnabled = true
-        btnCopyLan.isEnabled = true
         btnCopyClaudeLocalhost.isEnabled = true
-        btnCopyClaudeLan.isEnabled = true
         btnSaveApiKey.isEnabled = true
         btnGenerateApiKey.isEnabled = true
         btnCopyKey.isEnabled = !currentApiKey.isNullOrBlank()

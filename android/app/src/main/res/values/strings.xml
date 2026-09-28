@@ -16,19 +16,15 @@
     <string name="service_card_title">服务状态</string>
 
     <string name="connection_addresses_title">连接地址</string>
-    <string name="connection_addresses_description">按客户端使用的协议选择对应 Base URL</string>
+    <string name="connection_addresses_description">仅限本机访问，请按客户端协议选择 Base URL</string>
     <string name="openai_compatible_base_url">OpenAI 兼容 Base URL</string>
     <string name="claude_compatible_base_url">Claude 兼容 Base URL</string>
     <string name="local_address">本机地址: %1$s</string>
-    <string name="lan_address">局域网地址: %1$s</string>
     <string name="local_address_loading">本机地址: http://127.0.0.1:8317/v1</string>
-    <string name="lan_address_loading">局域网地址: http://127.0.0.1:8317/v1</string>
     <string name="claude_local_address_loading">本机地址: http://127.0.0.1:8317</string>
-    <string name="claude_lan_address_loading">局域网地址: http://127.0.0.1:8317</string>
     <string name="data_directory">数据目录: %1$s</string>
     <string name="data_directory_loading">数据目录: 正在加载…</string>
     <string name="copy_local_address">复制本机地址</string>
-    <string name="copy_lan_address">复制局域网地址</string>
 
     <string name="api_authentication_title">API 访问认证设置</string>
     <string name="api_authentication_description">手动设置密钥，或一键生成安全的随机密钥</string>
@@ -57,16 +53,13 @@
 
     <string name="open_management_console">打开管理控制台</string>
     <string name="network_vpn_title">网络与 VPN 兼容说明</string>
-    <string name="network_vpn_description">• 本机上的客户端请使用上方对应格式的 127.0.0.1 地址；局域网内其他设备请使用上方对应格式的局域网地址。\n• 开启 VPN 或代理软件后若无法连接，请确保本地地址走直连，包括 127.0.0.0/8 和当前局域网网段。可使用【绕过局域网/LAN】、【分应用代理】或自定义【路由规则】，具体名称因软件而异。\n• 使用【分应用绕过】时，该客户端的全部流量都不会经过 VPN，请仅在需要时启用。</string>
+    <string name="network_vpn_description">• 服务仅监听 127.0.0.1，只允许本机客户端访问，局域网内其他设备无法连接。\n• 开启 VPN 或代理软件后若无法连接，请开启【绕过局域网地址】或核心的【绕过 LAN】；也可在【分应用代理】中排除当前客户端，或为 127.0.0.0/8 添加直连路由规则。\n• 使用【分应用绕过】时，该客户端的全部流量都不会经过 VPN，请仅在需要时启用。</string>
 
     <string name="clipboard_local_address">CLIProxy 本机地址</string>
-    <string name="clipboard_lan_address">CLIProxy 局域网地址</string>
     <string name="clipboard_claude_local_address">CLIProxy Claude 本机地址</string>
-    <string name="clipboard_claude_lan_address">CLIProxy Claude 局域网地址</string>
     <string name="clipboard_api_key">CLIProxy API Key</string>
     <string name="clipboard_management_key">CLIProxy 管理密钥</string>
     <string name="toast_local_address_copied">已复制本机地址: %1$s</string>
-    <string name="toast_lan_address_copied">已复制局域网地址: %1$s</string>
     <string name="toast_api_key_copied">API Key 已复制到剪贴板</string>
     <string name="toast_management_key_copied">管理密钥已复制: %1$s</string>
     <string name="toast_management_key_updated">管理密钥已更新: %1$s</string>

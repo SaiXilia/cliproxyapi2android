@@ -9,7 +9,7 @@ CLIProxyAPI Android is a high-performance local AI proxy gateway ported from [CL
 ## 📱 Mobile Architecture Features
 
 - **Dual-Process Isolation**: The Android UI process and background proxy service (`:proxy` standalone process) are physically separated, shielding the UI from any Go runtime panics.
-- **Full Interface Binding & VPN Compatibility**: Listens on `0.0.0.0`, allowing local clients to connect directly via `127.0.0.1:8317` without VPN loopback interception, or share across devices via Wi-Fi LAN IP.
+- **Secure Local Loopback Binding & VPN Compatibility**: Listens strictly on `127.0.0.1:8317`, allowing on-device clients to connect directly without external network exposure risks, fully compatible with local VPN bypass routing.
 - **Anti-Freeze & Anti-Sleep Resilience**: Integrates hardware-level `PARTIAL_WAKE_LOCK` and `START_STICKY` service recovery to prevent system cgroup freezer (tombstoning) mechanisms from freezing network proxy sockets.
 - **Persistent Lightweight Notification**: Clean status bar notification indicating service running status while preventing system suspension.
 - **16KB Memory Page Alignment**: Both the native C-Shared library (`libcliproxy.so`) and standalone binaries strictly adhere to 16KB page alignment, ensuring full compatibility with Android 14 / 15+ kernels.
@@ -35,8 +35,8 @@ Open the app and tap **"启动服务" (Start Service)**. A persistent notificati
 
 ### 2. Client Configuration
 In any AI client supporting custom endpoints, enter:
-- **Local Endpoint**: `http://127.0.0.1:8317/v1` (for on-device apps, permanently fixed)
-- **LAN Endpoint**: `http://<Device_LAN_IP>:8317/v1` (for cross-device access on the same Wi-Fi)
+- **OpenAI-Compatible Base URL**: `http://127.0.0.1:8317/v1` (for on-device apps, permanently fixed)
+- **Claude-Compatible Base URL**: `http://127.0.0.1:8317` (for on-device apps, permanently fixed)
 - **API Key**: Configure based on app settings (supports keyless open access or the generated API Key)
 
 ### 3. Web Management Console
