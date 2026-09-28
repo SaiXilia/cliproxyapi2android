@@ -15,16 +15,29 @@
     <string name="status_stopping">Stopping…</string>
     <string name="service_card_title">Service status</string>
 
+    <string name="lan_access_title">LAN access</string>
+    <string name="lan_access_switch">Toggle LAN access</string>
+    <string name="lan_access_description_disabled">Off. The service accepts connections from this device only.</string>
+    <string name="lan_access_description_enabled">On. Devices on the same trusted LAN can connect.</string>
+    <string name="lan_access_description_keyless">On, but no API key is configured; devices on the LAN can call the API directly.</string>
+    <string name="lan_access_security_title">Enable LAN access?</string>
+    <string name="lan_access_security_message">API key protection is currently disabled. Any device on the same LAN will be able to call this proxy API. We recommend generating an API key first. Enable it anyway?</string>
+    <string name="enable_anyway">Enable anyway</string>
+
     <string name="connection_addresses_title">Connection addresses</string>
     <string name="connection_addresses_description">Local access only; choose the Base URL that matches your client protocol</string>
+    <string name="connection_addresses_description_lan">LAN access is on; the LAN address is shown below, and this device can still use 127.0.0.1</string>
     <string name="openai_compatible_base_url">OpenAI-compatible Base URL</string>
-    <string name="claude_compatible_base_url">Claude-compatible Base URL</string>
+    <string name="claude_compatible_base_url">Anthropic-compatible Base URL</string>
     <string name="local_address">Local address: %1$s</string>
+    <string name="lan_address">LAN address: %1$s</string>
+    <string name="lan_address_unavailable">No usable LAN IPv4 address was detected</string>
     <string name="local_address_loading">Local address: http://127.0.0.1:8317/v1</string>
     <string name="claude_local_address_loading">Local address: http://127.0.0.1:8317</string>
     <string name="data_directory">Data directory: %1$s</string>
     <string name="data_directory_loading">Data directory: Loading…</string>
-    <string name="copy_local_address">Copy local address</string>
+    <string name="copy_local_address">Copy</string>
+    <string name="copy_lan_address">Copy</string>
 
     <string name="api_authentication_title">API access authentication</string>
     <string name="api_authentication_description">Enter your own key or generate a secure random key</string>
@@ -78,12 +91,18 @@
 
     <string name="network_vpn_title">Network and VPN compatibility</string>
     <string name="network_vpn_description">• The service listens only on 127.0.0.1. It is available to clients on this device and cannot be reached from other LAN devices.\n• If access stops working after enabling VPN or proxy software, enable Bypass local addresses or Bypass LAN in its core settings. You can also exclude the client with per-app proxy settings or add a direct routing rule for 127.0.0.0/8.\n• Per-app bypass sends all traffic from the selected client outside the VPN. Enable it only when needed.</string>
+    <string name="network_vpn_description_lan">• The service listens on 0.0.0.0. Devices on the same LAN can use the address shown above, while this device can still use 127.0.0.1.\n• Enable this only on trusted networks and use an API key when possible. A system firewall or router client isolation may block connections.\n• VPN or proxy software can change routing. If connections fail, check Bypass local addresses, Bypass LAN, and per-app proxy settings.</string>
 
     <string name="clipboard_local_address">CLIProxy local address</string>
-    <string name="clipboard_claude_local_address">CLIProxy Claude local address</string>
+    <string name="clipboard_lan_address">CLIProxy LAN address</string>
+    <string name="clipboard_claude_local_address">CLIProxy Anthropic local address</string>
     <string name="clipboard_api_key">CLIProxy API key</string>
     <string name="clipboard_management_key">CLIProxy management key</string>
     <string name="toast_local_address_copied">Local address copied: %1$s</string>
+    <string name="toast_lan_address_copied">LAN address copied: %1$s</string>
+    <string name="toast_lan_access_enabled">LAN access enabled</string>
+    <string name="toast_lan_access_disabled">LAN access disabled</string>
+    <string name="toast_lan_access_restarting">Setting saved; restarting the service</string>
     <string name="toast_api_key_copied">API key copied to the clipboard</string>
     <string name="toast_management_key_copied">Management key copied: %1$s</string>
     <string name="toast_management_key_updated">Management key updated</string>

@@ -15,16 +15,29 @@
     <string name="status_stopping">正在停止…</string>
     <string name="service_card_title">服务状态</string>
 
+    <string name="lan_access_title">局域网访问</string>
+    <string name="lan_access_switch">切换局域网访问</string>
+    <string name="lan_access_description_disabled">已关闭。服务仅接受本机连接。</string>
+    <string name="lan_access_description_enabled">已开启。同一可信局域网内的设备可以连接。</string>
+    <string name="lan_access_description_keyless">已开启，但当前未设置 API Key；局域网内的设备可直接调用 API。</string>
+    <string name="lan_access_security_title">确认开启局域网访问？</string>
+    <string name="lan_access_security_message">当前为免密模式。开启后，同一局域网内的任何设备都可以调用此代理的 API。建议先生成 API Key。仍要开启吗？</string>
+    <string name="enable_anyway">仍然开启</string>
+
     <string name="connection_addresses_title">连接地址</string>
     <string name="connection_addresses_description">仅限本机访问，请按客户端协议选择 Base URL</string>
+    <string name="connection_addresses_description_lan">局域网访问已开启；下方显示局域网地址，本机仍可使用 127.0.0.1</string>
     <string name="openai_compatible_base_url">OpenAI 兼容 Base URL</string>
-    <string name="claude_compatible_base_url">Claude 兼容 Base URL</string>
+    <string name="claude_compatible_base_url">Anthropic 兼容 Base URL</string>
     <string name="local_address">本机地址: %1$s</string>
+    <string name="lan_address">局域网地址: %1$s</string>
+    <string name="lan_address_unavailable">未检测到可用的局域网 IPv4 地址</string>
     <string name="local_address_loading">本机地址: http://127.0.0.1:8317/v1</string>
     <string name="claude_local_address_loading">本机地址: http://127.0.0.1:8317</string>
     <string name="data_directory">数据目录: %1$s</string>
     <string name="data_directory_loading">数据目录: 正在加载…</string>
-    <string name="copy_local_address">复制本机地址</string>
+    <string name="copy_local_address">复制</string>
+    <string name="copy_lan_address">复制</string>
 
     <string name="api_authentication_title">API 访问认证设置</string>
     <string name="api_authentication_description">手动设置密钥，或一键生成安全的随机密钥</string>
@@ -78,12 +91,18 @@
 
     <string name="network_vpn_title">网络与 VPN 兼容说明</string>
     <string name="network_vpn_description">• 服务仅监听 127.0.0.1，只允许本机客户端访问，局域网内其他设备无法连接。\n• 开启 VPN 或代理软件后若无法连接，请开启【绕过局域网地址】或核心的【绕过 LAN】；也可在【分应用代理】中排除当前客户端，或为 127.0.0.0/8 添加直连路由规则。\n• 使用【分应用绕过】时，该客户端的全部流量都不会经过 VPN，请仅在需要时启用。</string>
+    <string name="network_vpn_description_lan">• 服务监听 0.0.0.0，同一局域网内的设备可通过上方地址连接；本机仍可使用 127.0.0.1。\n• 请仅在可信网络中开启，并建议启用 API Key。系统防火墙或路由器的设备隔离功能可能阻止连接。\n• VPN 或代理软件可能改变路由；连接异常时请检查【绕过局域网地址】、【绕过 LAN】及分应用代理设置。</string>
 
     <string name="clipboard_local_address">CLIProxy 本机地址</string>
-    <string name="clipboard_claude_local_address">CLIProxy Claude 本机地址</string>
+    <string name="clipboard_lan_address">CLIProxy 局域网地址</string>
+    <string name="clipboard_claude_local_address">CLIProxy Anthropic 本机地址</string>
     <string name="clipboard_api_key">CLIProxy API Key</string>
     <string name="clipboard_management_key">CLIProxy 管理密钥</string>
     <string name="toast_local_address_copied">已复制本机地址: %1$s</string>
+    <string name="toast_lan_address_copied">已复制局域网地址: %1$s</string>
+    <string name="toast_lan_access_enabled">已开启局域网访问</string>
+    <string name="toast_lan_access_disabled">已关闭局域网访问</string>
+    <string name="toast_lan_access_restarting">设置已保存，正在重启服务</string>
     <string name="toast_api_key_copied">API Key 已复制到剪贴板</string>
     <string name="toast_management_key_copied">管理密钥已复制: %1$s</string>
     <string name="toast_management_key_updated">管理密钥已更新</string>

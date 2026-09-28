@@ -26,6 +26,7 @@ import com.cliproxy.update.UpdateCheckResult
 import com.cliproxy.update.UpdateManager
 import com.cliproxy.update.UpdateJobService
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -34,10 +35,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.HttpURLConnection
+import java.net.Inet4Address
+import java.net.NetworkInterface
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.security.SecureRandom
+import java.util.Collections
 
 class MainActivity : AppCompatActivity() {
 
@@ -48,6 +52,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statusIndicator: View
     private lateinit var btnToggle: MaterialButton
     private lateinit var btnOpenWeb: MaterialButton
+    private lateinit var switchLanAccess: MaterialSwitch
+    private lateinit var tvLanAccessDescription: TextView
+    private lateinit var tvConnectionDescription: TextView
     private lateinit var btnCopyLocalhost: MaterialButton
     private lateinit var tvClaudeEndpointLocal: TextView
     private lateinit var btnCopyClaudeLocalhost: MaterialButton
@@ -65,8 +72,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvCoreVersion: TextView
     private lateinit var tvUpdateStatus: TextView
     private lateinit var btnCheckUpdate: MaterialButton
+    private lateinit var tvNetworkVpnDescription: TextView
 
     private var isRunning = false
+    private var isServiceStarting = false
+    private var isLanAccessEnabled = false
+    private var suppressLanAccessListener = false
+    private var displayedOpenAiEndpoint: String? = "http://127.0.0.1:8317/v1"
+    private var displayedClaudeEndpoint: String? = "http://127.0.0.1:8317"
+    private var displayedEndpointIsLan = false
     private var currentApiKey: String? = null
     private var currentMgmtKey: String = ""
     private var availableUpdate: AppUpdate? = null
@@ -103,6 +117,9 @@ class MainActivity : AppCompatActivity() {
         statusIndicator = findViewById(R.id.statusIndicator)
         btnToggle = findViewById(R.id.btnToggle)
         btnOpenWeb = findViewById(R.id.btnOpenWeb)
+        switchLanAccess = findViewById(R.id.switchLanAccess)
+        tvLanAccessDescription = findViewById(R.id.tvLanAccessDescription)
+        tvConnectionDescription = findViewById(R.id.tvConnectionDescription)
         btnCopyLocalhost = findViewById(R.id.btnCopyLocalhost)
         tvClaudeEndpointLocal = findViewById(R.id.tvClaudeEndpointLocal)
         btnCopyClaudeLocalhost = findViewById(R.id.btnCopyClaudeLocalhost)
@@ -120,6 +137,7 @@ class MainActivity : AppCompatActivity() {
         tvCoreVersion = findViewById(R.id.tvCoreVersion)
         tvUpdateStatus = findViewById(R.id.tvUpdateStatus)
         btnCheckUpdate = findViewById(R.id.btnCheckUpdate)
+        tvNetworkVpnDescription = findViewById(R.id.tvNetworkVpnDescription)
 
         val configDir = "${noBackupFilesDir.absolutePath}/cliproxy"
         tvDataDir.text = getString(R.string.data_directory, configDir)
@@ -130,7 +148,10 @@ class MainActivity : AppCompatActivity() {
         )
         tvCoreVersion.text = getString(R.string.core_version_value, BuildConfig.CORE_VERSION)
 
+        isLanAccessEnabled = loadLanAccessEnabled()
+        setLanAccessSwitchChecked(isLanAccessEnabled)
         refreshAuthSettingsUI()
+        updateNetworkAccessUI()
         showCachedUpdate()
 
         btnLanguage.setOnClickListener {
@@ -143,6 +164,15 @@ class MainActivity : AppCompatActivity() {
             recreate()
         }
 
+        switchLanAccess.setOnCheckedChangeListener { _, enabled ->
+            if (suppressLanAccessListener) return@setOnCheckedChangeListener
+            if (enabled && currentApiKey.isNullOrBlank()) {
+                showKeylessLanAccessWarning(configDir)
+            } else {
+                applyLanAccessChange(enabled, configDir)
+            }
+        }
+
         btnToggle.setOnClickListener {
             if (isRunning) {
                 stopProxy()
@@ -152,15 +182,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnCopyLocalhost.setOnClickListener {
-            val apiUrl = "http://127.0.0.1:8317/v1"
-            copyToClipboard(getString(R.string.clipboard_local_address), apiUrl)
-            Toast.makeText(this, getString(R.string.toast_local_address_copied, apiUrl), Toast.LENGTH_SHORT).show()
+            displayedOpenAiEndpoint?.let { apiUrl ->
+                copyDisplayedEndpoint(apiUrl, R.string.clipboard_local_address)
+            }
         }
 
         btnCopyClaudeLocalhost.setOnClickListener {
-            val apiUrl = "http://127.0.0.1:8317"
-            copyToClipboard(getString(R.string.clipboard_claude_local_address), apiUrl)
-            Toast.makeText(this, getString(R.string.toast_local_address_copied, apiUrl), Toast.LENGTH_SHORT).show()
+            displayedClaudeEndpoint?.let { apiUrl ->
+                copyDisplayedEndpoint(apiUrl, R.string.clipboard_claude_local_address)
+            }
         }
 
         btnOpenWeb.setOnClickListener {
@@ -219,6 +249,11 @@ class MainActivity : AppCompatActivity() {
         handleServiceIntent(intent)
     }
 
+    override fun onResume() {
+        super.onResume()
+        updateNetworkAccessUI()
+    }
+
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -238,6 +273,161 @@ class MainActivity : AppCompatActivity() {
             if (availableUpdate == null) checkForUpdates(silent = false)
             intent.removeExtra(EXTRA_SHOW_UPDATE)
         }
+    }
+
+    private fun loadLanAccessEnabled(): Boolean {
+        return getSharedPreferences(NETWORK_PREFERENCES, Context.MODE_PRIVATE)
+            .getBoolean(KEY_LAN_ACCESS_ENABLED, false)
+    }
+
+    private fun saveLanAccessEnabled(enabled: Boolean) {
+        getSharedPreferences(NETWORK_PREFERENCES, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_LAN_ACCESS_ENABLED, enabled)
+            .apply()
+    }
+
+    private fun setLanAccessSwitchChecked(enabled: Boolean) {
+        suppressLanAccessListener = true
+        switchLanAccess.isChecked = enabled
+        suppressLanAccessListener = false
+    }
+
+    private fun showKeylessLanAccessWarning(configDir: String) {
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.lan_access_security_title)
+            .setMessage(R.string.lan_access_security_message)
+            .setPositiveButton(R.string.enable_anyway) { _, _ ->
+                applyLanAccessChange(enabled = true, configDir)
+            }
+            .setNegativeButton(R.string.cancel) { _, _ ->
+                setLanAccessSwitchChecked(false)
+            }
+            .setOnCancelListener {
+                setLanAccessSwitchChecked(false)
+            }
+            .show()
+    }
+
+    private fun applyLanAccessChange(enabled: Boolean, configDir: String) {
+        if (isLanAccessEnabled == enabled) {
+            setLanAccessSwitchChecked(enabled)
+            return
+        }
+
+        isLanAccessEnabled = enabled
+        saveLanAccessEnabled(enabled)
+        setLanAccessSwitchChecked(enabled)
+        updateNetworkAccessUI()
+
+        if (isRunning) {
+            Toast.makeText(this, R.string.toast_lan_access_restarting, Toast.LENGTH_SHORT).show()
+            stopProxy()
+            lifecycleScope.launch {
+                delay(1200)
+                startProxy(configDir)
+            }
+        } else {
+            val message = if (enabled) R.string.toast_lan_access_enabled else R.string.toast_lan_access_disabled
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun updateNetworkAccessUI() {
+        setLanAccessSwitchChecked(isLanAccessEnabled)
+        switchLanAccess.isEnabled = !isServiceStarting
+
+        if (isLanAccessEnabled) {
+            val lanIp = detectLanIpAddress()
+            displayedEndpointIsLan = true
+            tvConnectionDescription.setText(R.string.connection_addresses_description_lan)
+            tvNetworkVpnDescription.setText(R.string.network_vpn_description_lan)
+            btnCopyLocalhost.setText(R.string.copy_lan_address)
+            btnCopyClaudeLocalhost.setText(R.string.copy_lan_address)
+
+            if (currentApiKey.isNullOrBlank()) {
+                tvLanAccessDescription.setText(R.string.lan_access_description_keyless)
+                tvLanAccessDescription.setTextColor(ContextCompat.getColor(this, R.color.status_warning))
+            } else {
+                tvLanAccessDescription.setText(R.string.lan_access_description_enabled)
+                tvLanAccessDescription.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+            }
+
+            if (lanIp == null) {
+                displayedOpenAiEndpoint = null
+                displayedClaudeEndpoint = null
+                tvEndpointLocal.setText(R.string.lan_address_unavailable)
+                tvClaudeEndpointLocal.setText(R.string.lan_address_unavailable)
+            } else {
+                displayedOpenAiEndpoint = "http://$lanIp:8317/v1"
+                displayedClaudeEndpoint = "http://$lanIp:8317"
+                tvEndpointLocal.text = getString(R.string.lan_address, displayedOpenAiEndpoint)
+                tvClaudeEndpointLocal.text = getString(R.string.lan_address, displayedClaudeEndpoint)
+            }
+        } else {
+            displayedEndpointIsLan = false
+            displayedOpenAiEndpoint = "http://127.0.0.1:8317/v1"
+            displayedClaudeEndpoint = "http://127.0.0.1:8317"
+            tvLanAccessDescription.setText(R.string.lan_access_description_disabled)
+            tvLanAccessDescription.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+            tvConnectionDescription.setText(R.string.connection_addresses_description)
+            tvNetworkVpnDescription.setText(R.string.network_vpn_description)
+            tvEndpointLocal.text = getString(R.string.local_address, displayedOpenAiEndpoint)
+            tvClaudeEndpointLocal.text = getString(R.string.local_address, displayedClaudeEndpoint)
+            btnCopyLocalhost.setText(R.string.copy_local_address)
+            btnCopyClaudeLocalhost.setText(R.string.copy_local_address)
+        }
+
+        btnCopyLocalhost.isEnabled = !isServiceStarting && displayedOpenAiEndpoint != null
+        btnCopyClaudeLocalhost.isEnabled = !isServiceStarting && displayedClaudeEndpoint != null
+    }
+
+    private fun copyDisplayedEndpoint(endpoint: String, localClipboardLabel: Int) {
+        val label = if (displayedEndpointIsLan) {
+            getString(R.string.clipboard_lan_address)
+        } else {
+            getString(localClipboardLabel)
+        }
+        val message = if (displayedEndpointIsLan) {
+            getString(R.string.toast_lan_address_copied, endpoint)
+        } else {
+            getString(R.string.toast_local_address_copied, endpoint)
+        }
+        copyToClipboard(label, endpoint)
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun detectLanIpAddress(): String? {
+        return try {
+            var fallbackAddress: String? = null
+            val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
+            for (networkInterface in interfaces) {
+                if (networkInterface.isLoopback || !networkInterface.isUp) continue
+                val name = networkInterface.name.lowercase()
+                if (name.contains("tun") || name.contains("vpn") || name.contains("dummy") ||
+                    name.contains("p2p") || name.contains("rmnet") || name.contains("ccmni")) {
+                    continue
+                }
+
+                for (address in Collections.list(networkInterface.inetAddresses)) {
+                    if (address.isLoopbackAddress || address !is Inet4Address) continue
+                    val host = address.hostAddress ?: continue
+                    if (!isPrivateLanAddress(host)) continue
+                    if (name.startsWith("wlan") || name.startsWith("eth")) return host
+                    if (fallbackAddress == null) fallbackAddress = host
+                }
+            }
+            fallbackAddress
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun isPrivateLanAddress(ip: String): Boolean {
+        if (ip.startsWith("10.") || ip.startsWith("192.168.")) return true
+        if (!ip.startsWith("172.")) return false
+        val secondOctet = ip.split(".").getOrNull(1)?.toIntOrNull() ?: return false
+        return secondOctet in 16..31
     }
 
     private fun showCachedUpdate() {
@@ -436,6 +626,7 @@ class MainActivity : AppCompatActivity() {
 
         currentMgmtKey = loadManagementKey()
         tvMgmtKeyValue.text = currentMgmtKey
+        updateNetworkAccessUI()
     }
 
     private fun loadApiKeyFromConfigFile(): String? {
@@ -609,7 +800,10 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, CLIProxyForegroundService::class.java).apply {
             action = CLIProxyForegroundService.ACTION_START
             putExtra(CLIProxyForegroundService.EXTRA_CONFIG_DIR, configDir)
-            putExtra(CLIProxyForegroundService.EXTRA_HOST, "127.0.0.1")
+            putExtra(
+                CLIProxyForegroundService.EXTRA_HOST,
+                if (isLanAccessEnabled) "0.0.0.0" else "127.0.0.1"
+            )
             putExtra(CLIProxyForegroundService.EXTRA_PORT, 8317)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -617,6 +811,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             startService(intent)
         }
+        isRunning = false
         updateUI(starting = true)
     }
 
@@ -625,6 +820,7 @@ class MainActivity : AppCompatActivity() {
             action = CLIProxyForegroundService.ACTION_STOP
         }
         startService(intent)
+        isRunning = false
         updateUI(running = false)
     }
 
@@ -668,12 +864,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateUI(running: Boolean = isRunning, starting: Boolean = false) {
+        isServiceStarting = starting
         if (starting) {
             tvStatus.setText(R.string.status_starting)
             statusIndicator.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#F59E0B"))
             btnToggle.setText(R.string.action_starting)
             btnToggle.isEnabled = false
             btnOpenWeb.isEnabled = false
+            switchLanAccess.isEnabled = false
             btnCopyLocalhost.isEnabled = false
             btnCopyClaudeLocalhost.isEnabled = false
             btnSaveApiKey.isEnabled = false
@@ -686,8 +884,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnToggle.isEnabled = true
-        btnCopyLocalhost.isEnabled = true
-        btnCopyClaudeLocalhost.isEnabled = true
+        switchLanAccess.isEnabled = true
         btnSaveApiKey.isEnabled = true
         btnGenerateApiKey.isEnabled = true
         btnCopyKey.isEnabled = !currentApiKey.isNullOrBlank()
@@ -707,9 +904,12 @@ class MainActivity : AppCompatActivity() {
             btnToggle.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#2563EB"))
             btnOpenWeb.isEnabled = false
         }
+        updateNetworkAccessUI()
     }
 
     companion object {
         const val EXTRA_SHOW_UPDATE = "show_update"
+        private const val NETWORK_PREFERENCES = "network_settings"
+        private const val KEY_LAN_ACCESS_ENABLED = "lan_access_enabled"
     }
 }

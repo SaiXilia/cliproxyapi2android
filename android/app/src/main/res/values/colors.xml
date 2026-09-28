@@ -13,5 +13,6 @@
     <color name="accent_purple">#C4B5FD</color>
     <color name="action_blue">#2563EB</color>
     <color name="status_running">#34D399</color>
+    <color name="status_warning">#F59E0B</color>
     <color name="status_stopped">#64748B</color>
 </resources>
