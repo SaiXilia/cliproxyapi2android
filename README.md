@@ -75,5 +75,6 @@ Monitor account quota pools, manage model aliases, and inspect operational metri
   cd android && ./gradlew assembleDebug
   ```
 
-### Cloud Automated Build
-Pushing changes to the repository triggers GitHub Actions to cross-compile the Go core and package the APK automatically, available under the Actions tab.
+### Cloud Automated Build & Official Releases
+- **Continuous Integration**: Pushing code triggers GitHub Actions to cross-compile the Go core and package the APK automatically, available under the Actions tab.
+- **Automated Releases**: Pushing a version tag (e.g. `git tag v1.0.0 && git push origin v1.0.0`) or manually triggering the **Release Android APK and CLI** workflow automatically publishes an official GitHub Release with standalone APK packages (`CLIProxyAPI-Android-v*.apk`) and SHA-256 checksums.

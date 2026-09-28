@@ -75,5 +75,6 @@ http://127.0.0.1:8317/management.html
   cd android && ./gradlew assembleDebug
   ```
 
-### 云端自动化编译
-推送代码至仓库后，GitHub Actions 将自动在云端完成 Go 核心交叉编译并打包出 APK，可在 Actions 页面直接下载制品。
+### 云端自动化编译与正式发布
+- **持续集成构建**：每次推送代码至仓库，GitHub Actions 将自动在云端完成 Go 核心交叉编译并打包出测试版 APK，可在 Actions 页面直接下载。
+- **自动化发布 Release**：向仓库推送版本标签（例如 `git tag v1.0.0 && git push origin v1.0.0`），或在 GitHub Actions 页面手动运行 **Release Android APK and CLI** 工作流，系统将自动打包并发布包含独立安装包（`CLIProxyAPI-Android-v*.apk`）与 SHA256 校验文件的正式 Release。

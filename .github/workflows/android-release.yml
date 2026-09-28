@@ -1,0 +1,157 @@
+name: Release Android APK and CLI
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag Name (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+      draft:
+        description: 'Create as a draft release'
+        type: boolean
+        default: false
+      prerelease:
+        description: 'Create as a pre-release'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve Release Tag
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag_name }}"
+          else
+            TAG="${{ github.ref_name }}"
+          fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Resolved release tag: ${TAG}"
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.x'
+          cache: true
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Set up Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27c
+          add-to-path: true
+
+      - name: Compile Native Core (libcliproxy.so & CLI binaries)
+        run: |
+          mkdir -p android/app/src/main/jniLibs/arm64-v8a
+          mkdir -p android/app/src/main/jniLibs/x86_64
+          mkdir -p dist/android/arm64-v8a
+          mkdir -p dist/android/x86_64
+
+          TOOLCHAIN="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64"
+
+          echo "Compiling arm64-v8a C-Shared library & CLI..."
+          CGO_ENABLED=1 GOOS=android GOARCH=arm64 \
+          CC="$TOOLCHAIN/bin/aarch64-linux-android26-clang" \
+          CXX="$TOOLCHAIN/bin/aarch64-linux-android26-clang++" \
+          go build -buildmode=c-shared -trimpath \
+            -ldflags="-s -w -extldflags '-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384'" \
+            -o android/app/src/main/jniLibs/arm64-v8a/libcliproxy.so ./cmd/mobile
+          rm -f android/app/src/main/jniLibs/arm64-v8a/libcliproxy.h
+
+          CGO_ENABLED=1 GOOS=android GOARCH=arm64 \
+          CC="$TOOLCHAIN/bin/aarch64-linux-android26-clang" \
+          CXX="$TOOLCHAIN/bin/aarch64-linux-android26-clang++" \
+          go build -buildmode=pie -trimpath \
+            -ldflags="-s -w -extldflags '-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384'" \
+            -o dist/android/arm64-v8a/cli-proxy-api ./cmd/server
+
+          echo "Compiling x86_64 C-Shared library & CLI..."
+          CGO_ENABLED=1 GOOS=android GOARCH=amd64 \
+          CC="$TOOLCHAIN/bin/x86_64-linux-android26-clang" \
+          CXX="$TOOLCHAIN/bin/x86_64-linux-android26-clang++" \
+          go build -buildmode=c-shared -trimpath \
+            -ldflags="-s -w -extldflags '-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384'" \
+            -o android/app/src/main/jniLibs/x86_64/libcliproxy.so ./cmd/mobile
+          rm -f android/app/src/main/jniLibs/x86_64/libcliproxy.h
+
+          CGO_ENABLED=1 GOOS=android GOARCH=amd64 \
+          CC="$TOOLCHAIN/bin/x86_64-linux-android26-clang" \
+          CXX="$TOOLCHAIN/bin/x86_64-linux-android26-clang++" \
+          go build -buildmode=pie -trimpath \
+            -ldflags="-s -w -extldflags '-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384'" \
+            -o dist/android/x86_64/cli-proxy-api ./cmd/server
+
+      - name: Build Android Release APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      - name: Prepare Release Artifacts & SHA256 Checksums
+        run: |
+          TAG="${{ steps.vars.outputs.tag }}"
+          mkdir -p release-assets
+
+          # Copy and rename artifacts
+          cp android/app/build/outputs/apk/release/app-release.apk release-assets/CLIProxyAPI-Android-${TAG}.apk
+          cp dist/android/arm64-v8a/cli-proxy-api release-assets/cli-proxy-api-android-arm64
+          cp dist/android/x86_64/cli-proxy-api release-assets/cli-proxy-api-android-x86_64
+
+          # Compute SHA-256 checksums
+          cd release-assets
+          sha256sum * > checksums.txt
+          cd ..
+
+          ls -lh release-assets/
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: CLIProxyAPI for Android ${{ steps.vars.outputs.tag }}
+          draft: ${{ inputs.draft || false }}
+          prerelease: ${{ inputs.prerelease || false }}
+          generate_release_notes: true
+          body: |
+            ## 📱 CLIProxyAPI for Android Release (${{ steps.vars.outputs.tag }})
+
+            High-performance local AI proxy gateway running directly on Android devices.
+
+            ### 📦 Download Files
+            - **`CLIProxyAPI-Android-${{ steps.vars.outputs.tag }}.apk`**: Android App (ready to install on Android 8.0+ / 14 / 15)
+            - **`cli-proxy-api-android-arm64`**: Standalone native CLI binary for ARM64 Android / Termux / Linux
+            - **`cli-proxy-api-android-x86_64`**: Standalone native CLI binary for x86_64 Android / Emulators
+            - **`checksums.txt`**: SHA-256 verification hashes
+
+            ### 🌟 Key Features
+            - **16KB Memory Page Alignment**: Strictly compliant with Android 14 / 15+ kernels.
+            - **Anti-Freeze & Anti-Sleep**: Hardware-level `PARTIAL_WAKE_LOCK` + `START_STICKY` service survival against Xiaomi HyperOS / ColorOS / OneUI tombstoning.
+            - **Full Interface Binding & VPN Compatibility**: Listens on `0.0.0.0`, allowing clients to connect directly via `127.0.0.1:8317` without VPN loopback conflicts, or share across Wi-Fi LAN IP.
+            - **Bidirectional Protocol Translation**: Transparent conversion between OpenAI ⇄ Claude ⇄ Gemini ⇄ Codex.
+            - **Extended Thinking**: Preserves Claude Extended Thinking (`budget_tokens`), Gemini thinking configurations, and OpenAI reasoning effort.
+            - **Built-in Offline WebUI**: Embedded visual management console accessible via `http://127.0.0.1:8317/management.html`.
+          files: |
+            release-assets/*
