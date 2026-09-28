@@ -42,6 +42,7 @@
 
     <string name="management_key_title">WebUI management key</string>
     <string name="management_key_description">Credentials for browser console access</string>
+    <string name="management_key_loading">Loading management key…</string>
     <string name="copy_management_key">Copy management key</string>
     <string name="edit_management_key">Edit management key</string>
     <string name="management_key_hint">Enter a new management key</string>
@@ -51,6 +52,30 @@
     <string name="cancel">Cancel</string>
 
     <string name="open_management_console">Open management console</string>
+
+    <string name="update_card_title">App and proxy core updates</string>
+    <string name="app_version_loading">App version: Loading…</string>
+    <string name="core_version_loading">Proxy core: Loading…</string>
+    <string name="app_version_value">App version: %1$s (%2$d)</string>
+    <string name="core_version_value">Proxy core: %1$s</string>
+    <string name="update_status_ready">Checks stable upstream releases daily; you can also check now</string>
+    <string name="check_for_updates">Check for updates</string>
+    <string name="update_checking">Checking…</string>
+    <string name="update_checking_description">Checking for app and proxy core updates…</string>
+    <string name="update_up_to_date">You are using the latest version</string>
+    <string name="update_source_unavailable">The update source is not available. This is expected while the repository is private or before its first release.</string>
+    <string name="update_check_failed">Update check failed: %1$s</string>
+    <string name="update_available">Version %1$s is available with proxy core %2$s</string>
+    <string name="download_and_install_update">Download and install</string>
+    <string name="update_downloading">Securely downloading the update…</string>
+    <string name="update_verified">Download complete; signature and integrity checks passed</string>
+    <string name="update_install_permission_required">Allow updates from this app, then return to continue</string>
+    <string name="update_download_failed">Update download or verification failed: %1$s</string>
+    <string name="unknown_error">Unknown error</string>
+    <string name="update_notification_channel">App and proxy core updates</string>
+    <string name="update_notification_title">CLIProxy API update available</string>
+    <string name="update_notification_message">Proxy core %1$s is ready; tap to review</string>
+
     <string name="network_vpn_title">Network and VPN compatibility</string>
     <string name="network_vpn_description">• The service listens only on 127.0.0.1. It is available to clients on this device and cannot be reached from other LAN devices.\n• If access stops working after enabling VPN or proxy software, enable Bypass local addresses or Bypass LAN in its core settings. You can also exclude the client with per-app proxy settings or add a direct routing rule for 127.0.0.0/8.\n• Per-app bypass sends all traffic from the selected client outside the VPN. Enable it only when needed.</string>
 
@@ -61,7 +86,7 @@
     <string name="toast_local_address_copied">Local address copied: %1$s</string>
     <string name="toast_api_key_copied">API key copied to the clipboard</string>
     <string name="toast_management_key_copied">Management key copied: %1$s</string>
-    <string name="toast_management_key_updated">Management key updated: %1$s</string>
+    <string name="toast_management_key_updated">Management key updated</string>
     <string name="toast_api_key_saved">API key saved</string>
     <string name="toast_api_key_generated">Random API key generated and saved</string>
     <string name="toast_switched_to_keyless">API key protection disabled</string>

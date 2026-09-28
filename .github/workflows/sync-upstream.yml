@@ -1,63 +1,139 @@
-name: Sync Upstream & Rebuild Core
+name: Sync Stable Upstream Core
 
 on:
   schedule:
-    # 每天 UTC 03:00 (北京时间 11:00) 自动检查上游更新
     - cron: '0 3 * * *'
-  workflow_dispatch: # 支持在 GitHub 网页手动点击按钮立即同步
+  workflow_dispatch:
+    inputs:
+      upstream_tag:
+        description: 'Optional upstream release tag, for example v8.0.3'
+        required: false
+        type: string
 
 permissions:
   contents: write
 
 jobs:
   sync:
-    name: Sync Upstream CLIProxyAPI
+    name: Sync latest stable CLIProxyAPI release
     runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.sync.outputs.changed }}
+      core_version: ${{ steps.sync.outputs.core_version }}
+      release_tag: ${{ steps.sync.outputs.release_tag }}
+      source_ref: ${{ steps.sync.outputs.source_ref }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Android repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
 
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Add and fetch upstream
+      - name: Fetch upstream releases
         run: |
-          git remote add upstream https://github.com/router-for-me/CLIProxyAPI.git || true
-          git fetch upstream main
+          git remote add upstream https://github.com/router-for-me/CLIProxyAPI.git 2>/dev/null || true
+          git fetch --force upstream main --tags
 
-      - name: Merge upstream changes
-        id: merge
+      - name: Resolve and merge stable release
+        id: sync
+        env:
+          REQUESTED_TAG: ${{ inputs.upstream_tag }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          git checkout main
-          if git merge upstream/main -X ours -m "chore(upstream): auto-merge upstream changes"; then
-            echo "merged=true" >> $GITHUB_OUTPUT
-            # 清洗上游广告、残留桌面配置与模板
-            python3 scripts/android/clean_sponsors.py || true
-            rm -f .github/workflows/agents-md-guard.yml \
-                  .github/workflows/auto-retarget-main-pr-to-dev.yml \
-                  .github/workflows/docker-image.yml \
-                  .github/workflows/pr-path-guard.yml \
-                  .github/workflows/pr-test-build.yml \
-                  .github/workflows/release.yaml \
-                  README_JA.md || true
-            if ! git diff --quiet || [ -n "$(git status --porcelain)" ]; then
-              git add -A
-              git commit -m "chore: purge upstream ads and desktop workflows" || true
-            fi
-            git push origin main
+          set -euo pipefail
+
+          if [[ -n "$REQUESTED_TAG" ]]; then
+            upstream_tag="$REQUESTED_TAG"
           else
-            echo "Merge conflict detected or already up to date"
-            git merge --abort || true
-            echo "merged=false" >> $GITHUB_OUTPUT
+            upstream_tag="$(curl --fail --silent --show-error \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              https://api.github.com/repos/router-for-me/CLIProxyAPI/releases/latest \
+              | python3 -c 'import json,sys; print(json.load(sys.stdin)["tag_name"])')"
           fi
+
+          if [[ ! "$upstream_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Unsupported upstream release tag: $upstream_tag" >&2
+            exit 1
+          fi
+          git rev-parse --verify "refs/tags/$upstream_tag" >/dev/null
+
+          current_tag="$(tr -d '[:space:]' < .github/upstream-version)"
+          release_tag="android-core-$upstream_tag"
+          if [[ "$current_tag" == "$upstream_tag" ]]; then
+            echo "CLIProxyAPI $upstream_tag is already integrated"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "core_version=$upstream_tag" >> "$GITHUB_OUTPUT"
+            echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
+            echo "source_ref=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          set +e
+          git merge --no-commit --no-ff "$upstream_tag"
+          merge_exit=$?
+          set -e
+
+          if (( merge_exit != 0 )); then
+            mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+            unexpected=()
+            for path in "${conflicts[@]}"; do
+              case "$path" in
+                examples/*|README_JA.md|.github/workflows/agents-md-guard.yml|.github/workflows/auto-retarget-main-pr-to-dev.yml|.github/workflows/docker-image.yml|.github/workflows/pr-path-guard.yml|.github/workflows/pr-test-build.yml|.github/workflows/release.yaml)
+                  git rm -f -- "$path"
+                  ;;
+                *)
+                  unexpected+=("$path")
+                  ;;
+              esac
+            done
+            if (( ${#unexpected[@]} > 0 )); then
+              printf 'Unresolved Android integration conflict: %s\n' "${unexpected[@]}" >&2
+              git merge --abort
+              exit 1
+            fi
+          fi
+
+          python3 scripts/android/clean_sponsors.py
+          rm -f \
+            .github/workflows/agents-md-guard.yml \
+            .github/workflows/auto-retarget-main-pr-to-dev.yml \
+            .github/workflows/docker-image.yml \
+            .github/workflows/pr-path-guard.yml \
+            .github/workflows/pr-test-build.yml \
+            .github/workflows/release.yaml \
+            README_JA.md
+          printf '%s\n' "$upstream_tag" > .github/upstream-version
+
+          git add -A
+          if git rev-parse -q --verify MERGE_HEAD >/dev/null; then
+            git commit -m "chore(upstream): sync $upstream_tag"
+          elif ! git diff --cached --quiet; then
+            git commit -m "chore(upstream): record $upstream_tag"
+          fi
+          git push origin HEAD:main
+
+          git tag -a "$release_tag" -m "Android build for CLIProxyAPI $upstream_tag"
+          git push origin "$release_tag"
+
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "core_version=$upstream_tag" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
+          echo "source_ref=$release_tag" >> "$GITHUB_OUTPUT"
+
+  release:
+    name: Build signed Android update
+    needs: sync
+    if: needs.sync.outputs.changed == 'true'
+    uses: ./.github/workflows/android-release.yml
+    with:
+      source_ref: ${{ needs.sync.outputs.source_ref }}
+      release_tag: ${{ needs.sync.outputs.release_tag }}
+      core_version: ${{ needs.sync.outputs.core_version }}
+    secrets: inherit

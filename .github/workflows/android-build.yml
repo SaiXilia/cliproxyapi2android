@@ -31,7 +31,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.27.x'
+          go-version: '1.26.x'
           cache: true
 
       - name: Set up JDK 17
@@ -85,7 +85,8 @@ jobs:
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          core_version="$(tr -d '[:space:]' < ../.github/upstream-version)"
+          ./gradlew assembleDebug -PcoreVersion="${core_version#v}"
 
       - name: Upload APK & CLI Binary Artifacts
         uses: actions/upload-artifact@v4

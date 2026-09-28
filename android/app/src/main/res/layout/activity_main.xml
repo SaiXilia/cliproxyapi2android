@@ -464,7 +464,7 @@
                     android:background="@drawable/value_background"
                     android:fontFamily="monospace"
                     android:padding="12dp"
-                    android:text="@string/default_management_key"
+                    android:text="@string/management_key_loading"
                     android:textColor="@color/text_primary"
                     android:textIsSelectable="true"
                     android:textSize="13sp" />
@@ -507,6 +507,75 @@
                         app:cornerRadius="12dp"
                         app:strokeColor="@color/card_stroke" />
                 </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- App and proxy core updates -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="14dp"
+            app:cardBackgroundColor="@color/card_background"
+            app:cardCornerRadius="22dp"
+            app:strokeColor="@color/card_stroke"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/update_card_title"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvAppVersion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:fontFamily="monospace"
+                    android:text="@string/app_version_loading"
+                    android:textColor="@color/text_primary"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvCoreVersion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:fontFamily="monospace"
+                    android:text="@string/core_version_loading"
+                    android:textColor="@color/text_primary"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvUpdateStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:lineSpacingExtra="2dp"
+                    android:text="@string/update_status_ready"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCheckUpdate"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="12dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minHeight="44dp"
+                    android:text="@string/check_for_updates"
+                    android:textSize="12sp"
+                    app:cornerRadius="12dp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

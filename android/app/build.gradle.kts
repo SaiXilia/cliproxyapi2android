@@ -3,6 +3,29 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+fun quotedBuildConfigValue(value: String): String =
+    "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
+val appVersionCodeValue = providers.gradleProperty("appVersionCode").orNull?.toIntOrNull() ?: 2
+val appVersionNameValue = providers.gradleProperty("appVersionName").orNull ?: "1.1.0"
+val coreVersionValue = providers.gradleProperty("coreVersion").orNull ?: "8.0.3"
+
+val releaseStoreFile = System.getenv("CLIPROXY_SIGNING_STORE_FILE")
+val releaseStorePassword = System.getenv("CLIPROXY_SIGNING_STORE_PASSWORD")
+val releaseKeyAlias = System.getenv("CLIPROXY_SIGNING_KEY_ALIAS")
+val releaseKeyPassword = System.getenv("CLIPROXY_SIGNING_KEY_PASSWORD")
+val hasReleaseSigning = listOf(
+    releaseStoreFile,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword
+).all { !it.isNullOrBlank() }
+val requireReleaseSigning = providers.gradleProperty("requireReleaseSigning").orNull.toBoolean()
+
+if (requireReleaseSigning && !hasReleaseSigning) {
+    throw GradleException("Release signing is required, but one or more CLIPROXY_SIGNING_* variables are missing")
+}
+
 android {
     namespace = "com.cliproxy"
     compileSdk = 34
@@ -11,8 +34,10 @@ android {
         applicationId = "com.cliproxy"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = appVersionCodeValue
+        versionName = appVersionNameValue
+
+        buildConfigField("String", "CORE_VERSION", quotedBuildConfigValue(coreVersionValue))
 
         ndk {
             abiFilters.addAll(setOf("arm64-v8a", "x86_64"))
@@ -25,10 +50,25 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(requireNotNull(releaseStoreFile))
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (hasReleaseSigning) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -50,6 +90,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 
     bundle {

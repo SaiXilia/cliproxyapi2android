@@ -77,4 +77,11 @@ http://127.0.0.1:8317/management.html
 
 ### 云端自动化编译与正式发布
 - **持续集成构建**：每次推送代码至仓库，GitHub Actions 将自动在云端完成 Go 核心交叉编译并打包出测试版 APK，可在 Actions 页面直接下载。
-- **自动化发布 Release**：向仓库推送版本标签（例如 `git tag v1.0.0 && git push origin v1.0.0`），或在 GitHub Actions 页面手动运行 **Release Android APK and CLI** 工作流，系统将自动打包并发布包含独立安装包（`CLIProxyAPI-Android-v*.apk`）与 SHA256 校验文件的正式 Release。
+- **自动发布 Release**：每日稳定版同步流程会检测 `router-for-me/CLIProxyAPI` 的最新正式版本，完成合并、双 ABI 编译、APK 签名，并发布 APK、`update.json` 与 SHA-256 校验文件；也支持手动运行发布工作流。
+
+### 更新与安全
+
+- App 启动时及 Android 每日后台任务会检查本仓库的最新 GitHub Release。
+- 更新 APK 必须通过包名、版本号、SHA-256 与签名证书验证，随后才会打开 Android 安装界面。
+- Android 仍会要求用户确认安装；App 不会静默加载远程可执行代码。
+- 参见 [安全策略](SECURITY.md) 与 [隐私说明](PRIVACY.md)。

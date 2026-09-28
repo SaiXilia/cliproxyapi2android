@@ -1,6 +1,9 @@
 # Binaries
 cli-proxy-api
 *.exe
+*.jks
+*.keystore
+*.p12
 
 # Configuration
 config.yaml

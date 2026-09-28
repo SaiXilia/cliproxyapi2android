@@ -4,10 +4,10 @@
   "generatedAt": "2026-09-26T16:53:00+08:00",
   "upstream": {
     "repository": "https://github.com/router-for-me/CLIProxyAPI.git",
-    "commit": "ed980be34b9981735eaa16941956b1e8d9abfb7c",
-    "commitDate": "2026-09-26T13:47:25+08:00",
-    "commitSubject": "fix(auth): preserve resolved model capabilities and configuration update support",
-    "module": "github.com/router-for-me/CLIProxyAPI/v7"
+    "commit": "acdace936fa7df2905500c7f5e0a97d683138dea",
+    "commitDate": "2026-09-28T08:19:03+08:00",
+    "commitSubject": "fix(discovery): support bonded interfaces and deduplicate build warnings",
+    "module": "github.com/router-for-me/CLIProxyAPI/v8"
   },
   "toolchain": {
     "go": "1.27.0",

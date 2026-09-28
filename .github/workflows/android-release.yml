@@ -1,54 +1,78 @@
-name: Release Android APK and CLI
+name: Release Signed Android Update
 
 on:
-  push:
-    tags:
-      - 'v*'
-      - 'android-v*'
+  workflow_call:
+    inputs:
+      source_ref:
+        description: 'Git ref containing the integrated Android source'
+        required: true
+        type: string
+      release_tag:
+        description: 'Release tag to publish'
+        required: true
+        type: string
+      core_version:
+        description: 'Upstream CLIProxyAPI tag'
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
-      tag_name:
-        description: 'Release Tag Name (e.g. v1.0.0)'
+      source_ref:
+        description: 'Git ref to build'
         required: true
-        default: 'v1.0.0'
-      draft:
-        description: 'Create as a draft release'
-        type: boolean
-        default: false
-      prerelease:
-        description: 'Create as a pre-release'
-        type: boolean
-        default: false
+        default: 'main'
+        type: string
+      release_tag:
+        description: 'Android release tag, for example android-core-v8.0.3'
+        required: true
+        type: string
+      core_version:
+        description: 'Upstream CLIProxyAPI tag, for example v8.0.3'
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 jobs:
   release:
-    name: Build & Publish Release
+    name: Build, verify, and publish Android APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout integrated source
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.source_ref }}
 
-      - name: Resolve Release Tag
-        id: vars
+      - name: Resolve version metadata
+        id: version
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          CORE_TAG: ${{ inputs.core_version }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ inputs.tag_name }}"
-          else
-            TAG="${{ github.ref_name }}"
+          set -euo pipefail
+          core_version="${CORE_TAG#v}"
+          if [[ ! "$core_version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+            echo "Unsupported core version: $CORE_TAG" >&2
+            exit 1
           fi
-          echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "Resolved release tag: ${TAG}"
+          version_code=$((10000000 + $(git rev-list --count HEAD)))
+          if (( version_code <= 0 || version_code > 2100000000 )); then
+            echo "Android version code is out of range: $version_code" >&2
+            exit 1
+          fi
+          version_name="1.1.0-core.$core_version"
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "core_version=$core_version" >> "$GITHUB_OUTPUT"
+          echo "version_code=$version_code" >> "$GITHUB_OUTPUT"
+          echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.27.x'
+          go-version: '1.26.x'
           cache: true
 
       - name: Set up JDK 17
@@ -64,95 +88,131 @@ jobs:
           ndk-version: r27c
           add-to-path: true
 
-      - name: Compile Native Core (libcliproxy.so & CLI binaries)
+      - name: Restore release signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
         run: |
+          set -euo pipefail
+          if [[ -z "$KEYSTORE_BASE64" || -z "$STORE_PASSWORD" || -z "$KEY_ALIAS" || -z "$KEY_PASSWORD" ]]; then
+            echo "Android release signing secrets are not configured" >&2
+            exit 1
+          fi
+          keystore_path="$RUNNER_TEMP/cliproxy-release.jks"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
+          chmod 600 "$keystore_path"
+          echo "CLIPROXY_SIGNING_STORE_FILE=$keystore_path" >> "$GITHUB_ENV"
+          echo "CLIPROXY_SIGNING_STORE_PASSWORD=$STORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "CLIPROXY_SIGNING_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "CLIPROXY_SIGNING_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
+
+      - name: Verify Go server build
+        run: |
+          go build -o test-output ./cmd/server
+          rm -f test-output
+
+      - name: Compile Android proxy core
+        env:
+          CORE_VERSION: ${{ steps.version.outputs.core_version }}
+        run: |
+          set -euo pipefail
           mkdir -p android/app/src/main/jniLibs/arm64-v8a
           mkdir -p android/app/src/main/jniLibs/x86_64
-          mkdir -p dist/android/arm64-v8a
-          mkdir -p dist/android/x86_64
+          toolchain="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64"
+          build_date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          commit="$(git rev-parse --short HEAD)"
+          ldflags="-s -w -X github.com/router-for-me/CLIProxyAPI/v8/internal/buildinfo.Version=$CORE_VERSION -X github.com/router-for-me/CLIProxyAPI/v8/internal/buildinfo.Commit=$commit -X github.com/router-for-me/CLIProxyAPI/v8/internal/buildinfo.BuildDate=$build_date -extldflags '-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384'"
 
-          TOOLCHAIN="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64"
-
-          echo "Compiling arm64-v8a C-Shared library & CLI..."
           CGO_ENABLED=1 GOOS=android GOARCH=arm64 \
-          CC="$TOOLCHAIN/bin/aarch64-linux-android26-clang" \
-          CXX="$TOOLCHAIN/bin/aarch64-linux-android26-clang++" \
-          go build -buildmode=c-shared -trimpath \
-            -ldflags="-s -w -extldflags '-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384'" \
+          CC="$toolchain/bin/aarch64-linux-android26-clang" \
+          CXX="$toolchain/bin/aarch64-linux-android26-clang++" \
+          go build -buildmode=c-shared -trimpath -ldflags="$ldflags" \
             -o android/app/src/main/jniLibs/arm64-v8a/libcliproxy.so ./cmd/mobile
           rm -f android/app/src/main/jniLibs/arm64-v8a/libcliproxy.h
 
-          CGO_ENABLED=1 GOOS=android GOARCH=arm64 \
-          CC="$TOOLCHAIN/bin/aarch64-linux-android26-clang" \
-          CXX="$TOOLCHAIN/bin/aarch64-linux-android26-clang++" \
-          go build -buildmode=pie -trimpath \
-            -ldflags="-s -w -extldflags '-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384'" \
-            -o dist/android/arm64-v8a/cli-proxy-api ./cmd/server
-
-          echo "Compiling x86_64 C-Shared library & CLI..."
           CGO_ENABLED=1 GOOS=android GOARCH=amd64 \
-          CC="$TOOLCHAIN/bin/x86_64-linux-android26-clang" \
-          CXX="$TOOLCHAIN/bin/x86_64-linux-android26-clang++" \
-          go build -buildmode=c-shared -trimpath \
-            -ldflags="-s -w -extldflags '-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384'" \
+          CC="$toolchain/bin/x86_64-linux-android26-clang" \
+          CXX="$toolchain/bin/x86_64-linux-android26-clang++" \
+          go build -buildmode=c-shared -trimpath -ldflags="$ldflags" \
             -o android/app/src/main/jniLibs/x86_64/libcliproxy.so ./cmd/mobile
           rm -f android/app/src/main/jniLibs/x86_64/libcliproxy.h
 
-          CGO_ENABLED=1 GOOS=android GOARCH=amd64 \
-          CC="$TOOLCHAIN/bin/x86_64-linux-android26-clang" \
-          CXX="$TOOLCHAIN/bin/x86_64-linux-android26-clang++" \
-          go build -buildmode=pie -trimpath \
-            -ldflags="-s -w -extldflags '-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384'" \
-            -o dist/android/x86_64/cli-proxy-api ./cmd/server
-
-      - name: Build Android Release APK
+      - name: Build signed release APK
         working-directory: android
+        env:
+          VERSION_CODE: ${{ steps.version.outputs.version_code }}
+          VERSION_NAME: ${{ steps.version.outputs.version_name }}
+          CORE_VERSION: ${{ steps.version.outputs.core_version }}
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease \
+            -PrequireReleaseSigning=true \
+            -PappVersionCode="$VERSION_CODE" \
+            -PappVersionName="$VERSION_NAME" \
+            -PcoreVersion="$CORE_VERSION"
 
-      - name: Prepare Release Artifacts & SHA256 Checksums
+      - name: Verify APK signature
         run: |
-          TAG="${{ steps.vars.outputs.tag }}"
+          set -euo pipefail
+          apksigner_path="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          "$apksigner_path" verify --verbose --print-certs android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Prepare update manifest and checksums
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
+          VERSION_CODE: ${{ steps.version.outputs.version_code }}
+          VERSION_NAME: ${{ steps.version.outputs.version_name }}
+          CORE_VERSION: ${{ steps.version.outputs.core_version }}
+        run: |
+          set -euo pipefail
           mkdir -p release-assets
+          apk_name="CLIProxyAPI-Android-$RELEASE_TAG.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "release-assets/$apk_name"
+          apk_sha256="$(sha256sum "release-assets/$apk_name" | awk '{print $1}')"
+          export APK_NAME="$apk_name" APK_SHA256="$apk_sha256"
+          python3 - <<'PY'
+          import json
+          import os
 
-          # Copy and rename artifacts
-          cp android/app/build/outputs/apk/release/app-release.apk release-assets/CLIProxyAPI-Android-${TAG}.apk
-          cp dist/android/arm64-v8a/cli-proxy-api release-assets/cli-proxy-api-android-arm64
-          cp dist/android/x86_64/cli-proxy-api release-assets/cli-proxy-api-android-x86_64
-
-          # Compute SHA-256 checksums
-          cd release-assets
-          sha256sum * > checksums.txt
-          cd ..
-
-          ls -lh release-assets/
+          manifest = {
+              "schema_version": 1,
+              "version_code": int(os.environ["VERSION_CODE"]),
+              "version_name": os.environ["VERSION_NAME"],
+              "core_version": os.environ["CORE_VERSION"],
+              "package_name": "com.cliproxy",
+              "apk_url": (
+                  f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/releases/download/"
+                  f"{os.environ['RELEASE_TAG']}/{os.environ['APK_NAME']}"
+              ),
+              "sha256": os.environ["APK_SHA256"],
+              "release_notes": f"CLIProxyAPI core {os.environ['CORE_VERSION']}",
+          }
+          with open("release-assets/update.json", "w", encoding="utf-8") as output:
+              json.dump(manifest, output, ensure_ascii=False, indent=2)
+              output.write("\n")
+          PY
+          (
+            cd release-assets
+            sha256sum "$apk_name" update.json > checksums.txt
+          )
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.vars.outputs.tag }}
-          name: CLIProxyAPI for Android ${{ steps.vars.outputs.tag }}
-          draft: ${{ inputs.draft || false }}
-          prerelease: ${{ inputs.prerelease || false }}
+          tag_name: ${{ steps.version.outputs.release_tag }}
+          name: CLIProxyAPI Android ${{ steps.version.outputs.version_name }}
           generate_release_notes: true
+          make_latest: true
+          fail_on_unmatched_files: true
           body: |
-            ## 📱 CLIProxyAPI for Android Release (${{ steps.vars.outputs.tag }})
+            Android application update built from the official router-for-me/CLIProxyAPI stable release.
 
-            High-performance local AI proxy gateway running directly on Android devices.
+            - App version: `${{ steps.version.outputs.version_name }}`
+            - Proxy core: `${{ steps.version.outputs.core_version }}`
+            - Android version code: `${{ steps.version.outputs.version_code }}`
 
-            ### 📦 Download Files
-            - **`CLIProxyAPI-Android-${{ steps.vars.outputs.tag }}.apk`**: Android App (ready to install on Android 8.0+ / 14 / 15)
-            - **`cli-proxy-api-android-arm64`**: Standalone native CLI binary for ARM64 Android / Termux / Linux
-            - **`cli-proxy-api-android-x86_64`**: Standalone native CLI binary for x86_64 Android / Emulators
-            - **`checksums.txt`**: SHA-256 verification hashes
-
-            ### 🌟 Key Features
-            - **16KB Memory Page Alignment**: Strictly compliant with Android 14 / 15+ kernels.
-            - **Anti-Freeze & Anti-Sleep**: Hardware-level `PARTIAL_WAKE_LOCK` + `START_STICKY` service survival against Xiaomi HyperOS / ColorOS / OneUI tombstoning.
-            - **Local Loopback Binding & VPN Compatibility**: Listens on `127.0.0.1:8317`, allowing clients to connect directly without VPN loopback conflicts or external exposure risks.
-            - **Bidirectional Protocol Translation**: Transparent conversion between OpenAI ⇄ Claude ⇄ Gemini ⇄ Codex.
-            - **Extended Thinking**: Preserves Claude Extended Thinking (`budget_tokens`), Gemini thinking configurations, and OpenAI reasoning effort.
-            - **Built-in Offline WebUI**: Embedded visual management console accessible via `http://127.0.0.1:8317/management.html`.
+            The APK includes both arm64-v8a and x86_64 native cores. Existing settings and OAuth data are preserved during a normal signed update.
           files: |
             release-assets/*

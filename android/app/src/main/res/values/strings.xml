@@ -42,7 +42,7 @@
 
     <string name="management_key_title">WebUI 控制台管理密钥</string>
     <string name="management_key_description">浏览器访问控制台凭证</string>
-    <string name="default_management_key" translatable="false">admin8317</string>
+    <string name="management_key_loading">正在加载管理密钥…</string>
     <string name="copy_management_key">复制管理密钥</string>
     <string name="edit_management_key">修改管理密钥</string>
     <string name="management_key_hint">请输入新的管理密钥</string>
@@ -52,6 +52,30 @@
     <string name="cancel">取消</string>
 
     <string name="open_management_console">打开管理控制台</string>
+
+    <string name="update_card_title">应用与代理内核更新</string>
+    <string name="app_version_loading">应用版本: 正在加载…</string>
+    <string name="core_version_loading">代理内核: 正在加载…</string>
+    <string name="app_version_value">应用版本: %1$s (%2$d)</string>
+    <string name="core_version_value">代理内核: %1$s</string>
+    <string name="update_status_ready">每天自动检查上游正式版本，也可手动立即检查</string>
+    <string name="check_for_updates">立即检查更新</string>
+    <string name="update_checking">检查中…</string>
+    <string name="update_checking_description">正在检查应用和代理内核更新…</string>
+    <string name="update_up_to_date">当前已是最新版本</string>
+    <string name="update_source_unavailable">更新源暂不可访问。仓库为私有或尚未发布正式版本时会出现此提示。</string>
+    <string name="update_check_failed">检查更新失败: %1$s</string>
+    <string name="update_available">发现新版本 %1$s，代理内核 %2$s</string>
+    <string name="download_and_install_update">下载并安装更新</string>
+    <string name="update_downloading">正在安全下载更新包…</string>
+    <string name="update_verified">下载完成，签名与完整性验证通过</string>
+    <string name="update_install_permission_required">请允许安装来自此应用的更新，然后返回继续</string>
+    <string name="update_download_failed">下载或验证更新失败: %1$s</string>
+    <string name="unknown_error">未知错误</string>
+    <string name="update_notification_channel">应用与代理内核更新</string>
+    <string name="update_notification_title">CLIProxy API 有可用更新</string>
+    <string name="update_notification_message">代理内核 %1$s 已准备发布，点按查看</string>
+
     <string name="network_vpn_title">网络与 VPN 兼容说明</string>
     <string name="network_vpn_description">• 服务仅监听 127.0.0.1，只允许本机客户端访问，局域网内其他设备无法连接。\n• 开启 VPN 或代理软件后若无法连接，请开启【绕过局域网地址】或核心的【绕过 LAN】；也可在【分应用代理】中排除当前客户端，或为 127.0.0.0/8 添加直连路由规则。\n• 使用【分应用绕过】时，该客户端的全部流量都不会经过 VPN，请仅在需要时启用。</string>
 
@@ -62,7 +86,7 @@
     <string name="toast_local_address_copied">已复制本机地址: %1$s</string>
     <string name="toast_api_key_copied">API Key 已复制到剪贴板</string>
     <string name="toast_management_key_copied">管理密钥已复制: %1$s</string>
-    <string name="toast_management_key_updated">管理密钥已更新: %1$s</string>
+    <string name="toast_management_key_updated">管理密钥已更新</string>
     <string name="toast_api_key_saved">API Key 已保存</string>
     <string name="toast_api_key_generated">随机 API Key 已生成并保存</string>
     <string name="toast_switched_to_keyless">已停用 API 密钥验证</string>

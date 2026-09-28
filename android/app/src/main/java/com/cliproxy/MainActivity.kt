@@ -11,6 +11,7 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
@@ -20,6 +21,10 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.cliproxy.service.CLIProxyForegroundService
+import com.cliproxy.update.AppUpdate
+import com.cliproxy.update.UpdateCheckResult
+import com.cliproxy.update.UpdateManager
+import com.cliproxy.update.UpdateJobService
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.Dispatchers
@@ -56,14 +61,32 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvMgmtKeyValue: TextView
     private lateinit var btnCopyMgmtKey: MaterialButton
     private lateinit var btnEditMgmtKey: MaterialButton
+    private lateinit var tvAppVersion: TextView
+    private lateinit var tvCoreVersion: TextView
+    private lateinit var tvUpdateStatus: TextView
+    private lateinit var btnCheckUpdate: MaterialButton
 
     private var isRunning = false
     private var currentApiKey: String? = null
-    private var currentMgmtKey: String = "admin8317"
+    private var currentMgmtKey: String = ""
+    private var availableUpdate: AppUpdate? = null
+    private var pendingInstallFile: File? = null
 
     private val requestNotificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { _ -> }
+
+    private val requestInstallPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        val apkFile = pendingInstallFile ?: return@registerForActivityResult
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || packageManager.canRequestPackageInstalls()) {
+            pendingInstallFile = null
+            launchUpdateInstaller(apkFile)
+        } else {
+            tvUpdateStatus.setText(R.string.update_install_permission_required)
+        }
+    }
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(AppLanguage.wrap(newBase))
@@ -93,11 +116,22 @@ class MainActivity : AppCompatActivity() {
         tvMgmtKeyValue = findViewById(R.id.tvMgmtKeyValue)
         btnCopyMgmtKey = findViewById(R.id.btnCopyMgmtKey)
         btnEditMgmtKey = findViewById(R.id.btnEditMgmtKey)
+        tvAppVersion = findViewById(R.id.tvAppVersion)
+        tvCoreVersion = findViewById(R.id.tvCoreVersion)
+        tvUpdateStatus = findViewById(R.id.tvUpdateStatus)
+        btnCheckUpdate = findViewById(R.id.btnCheckUpdate)
 
         val configDir = "${noBackupFilesDir.absolutePath}/cliproxy"
         tvDataDir.text = getString(R.string.data_directory, configDir)
+        tvAppVersion.text = getString(
+            R.string.app_version_value,
+            BuildConfig.VERSION_NAME,
+            BuildConfig.VERSION_CODE
+        )
+        tvCoreVersion.text = getString(R.string.core_version_value, BuildConfig.CORE_VERSION)
 
         refreshAuthSettingsUI()
+        showCachedUpdate()
 
         btnLanguage.setOnClickListener {
             val nextLanguage = if (AppLanguage.get(this) == AppLanguage.CHINESE) {
@@ -167,7 +201,20 @@ class MainActivity : AppCompatActivity() {
             showEditManagementKeyDialog(configDir)
         }
 
+        btnCheckUpdate.setOnClickListener {
+            val update = availableUpdate
+            if (update == null) {
+                checkForUpdates(silent = false)
+            } else {
+                downloadUpdate(update)
+            }
+        }
+
         checkNotificationPermission()
+        UpdateJobService.schedule(this)
+        if (UpdateManager.shouldCheckOnStartup(this)) {
+            checkForUpdates(silent = true)
+        }
         startStatusChecker()
         handleServiceIntent(intent)
     }
@@ -185,6 +232,111 @@ class MainActivity : AppCompatActivity() {
             startProxy(configDir)
         } else if (intent.getBooleanExtra("stop_service", false)) {
             stopProxy()
+        }
+        if (intent.getBooleanExtra(EXTRA_SHOW_UPDATE, false)) {
+            showCachedUpdate()
+            if (availableUpdate == null) checkForUpdates(silent = false)
+            intent.removeExtra(EXTRA_SHOW_UPDATE)
+        }
+    }
+
+    private fun showCachedUpdate() {
+        val cached = UpdateManager.loadCachedUpdate(this)
+        if (cached == null) {
+            availableUpdate = null
+            tvUpdateStatus.setText(R.string.update_status_ready)
+            btnCheckUpdate.setText(R.string.check_for_updates)
+        } else {
+            showAvailableUpdate(cached)
+        }
+    }
+
+    private fun checkForUpdates(silent: Boolean) {
+        btnCheckUpdate.isEnabled = false
+        btnCheckUpdate.setText(R.string.update_checking)
+        if (!silent) tvUpdateStatus.setText(R.string.update_checking_description)
+
+        lifecycleScope.launch {
+            when (val result = UpdateManager.checkForUpdate(this@MainActivity)) {
+                is UpdateCheckResult.Available -> showAvailableUpdate(result.update)
+                UpdateCheckResult.UpToDate -> {
+                    availableUpdate = null
+                    tvUpdateStatus.setText(R.string.update_up_to_date)
+                    btnCheckUpdate.setText(R.string.check_for_updates)
+                }
+                UpdateCheckResult.SourceUnavailable -> {
+                    availableUpdate = null
+                    tvUpdateStatus.setText(R.string.update_source_unavailable)
+                    btnCheckUpdate.setText(R.string.check_for_updates)
+                }
+                is UpdateCheckResult.Failed -> {
+                    availableUpdate = null
+                    tvUpdateStatus.text = getString(R.string.update_check_failed, result.reason)
+                    btnCheckUpdate.setText(R.string.check_for_updates)
+                }
+            }
+            btnCheckUpdate.isEnabled = true
+        }
+    }
+
+    private fun showAvailableUpdate(update: AppUpdate) {
+        availableUpdate = update
+        tvUpdateStatus.text = getString(
+            R.string.update_available,
+            update.versionName,
+            update.coreVersion
+        )
+        btnCheckUpdate.setText(R.string.download_and_install_update)
+        btnCheckUpdate.isEnabled = true
+    }
+
+    private fun downloadUpdate(update: AppUpdate) {
+        btnCheckUpdate.isEnabled = false
+        tvUpdateStatus.setText(R.string.update_downloading)
+        lifecycleScope.launch {
+            try {
+                val apkFile = UpdateManager.downloadAndVerify(this@MainActivity, update)
+                tvUpdateStatus.setText(R.string.update_verified)
+                requestUpdateInstallation(apkFile)
+            } catch (e: Exception) {
+                tvUpdateStatus.text = getString(
+                    R.string.update_download_failed,
+                    e.message ?: getString(R.string.unknown_error)
+                )
+                btnCheckUpdate.isEnabled = true
+            }
+        }
+    }
+
+    private fun requestUpdateInstallation(apkFile: File) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            !packageManager.canRequestPackageInstalls()
+        ) {
+            pendingInstallFile = apkFile
+            tvUpdateStatus.setText(R.string.update_install_permission_required)
+            val settingsIntent = Intent(
+                Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:$packageName")
+            )
+            requestInstallPermissionLauncher.launch(settingsIntent)
+            return
+        }
+        launchUpdateInstaller(apkFile)
+    }
+
+    private fun launchUpdateInstaller(apkFile: File) {
+        val openInstaller = {
+            startActivity(UpdateManager.createInstallIntent(this, apkFile))
+            btnCheckUpdate.isEnabled = true
+        }
+        if (isRunning) {
+            stopProxy()
+            lifecycleScope.launch {
+                delay(800)
+                openInstaller()
+            }
+        } else {
+            openInstaller()
         }
     }
 
@@ -210,7 +362,7 @@ class MainActivity : AppCompatActivity() {
             val key = file.readText().trim()
             if (key.isNotEmpty()) return key
         }
-        val defaultKey = "admin8317"
+        val defaultKey = "cpa-mgmt-${generateRandomHex(16)}"
         try {
             file.parentFile?.mkdirs()
             file.writeText(defaultKey)
@@ -257,7 +409,7 @@ class MainActivity : AppCompatActivity() {
                             startProxy(configDir)
                         }
                     }
-                    Toast.makeText(this, getString(R.string.toast_management_key_updated, newKey), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, R.string.toast_management_key_updated, Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton(R.string.cancel, null)
@@ -555,5 +707,9 @@ class MainActivity : AppCompatActivity() {
             btnToggle.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#2563EB"))
             btnOpenWeb.isEnabled = false
         }
+    }
+
+    companion object {
+        const val EXTRA_SHOW_UPDATE = "show_update"
     }
 }

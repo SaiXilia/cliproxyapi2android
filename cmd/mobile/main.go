@@ -22,12 +22,12 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/browser"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/config"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/managementasset"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/misc"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/registry"
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy"
+	"github.com/router-for-me/CLIProxyAPI/v8/internal/browser"
+	"github.com/router-for-me/CLIProxyAPI/v8/internal/config"
+	"github.com/router-for-me/CLIProxyAPI/v8/internal/managementasset"
+	"github.com/router-for-me/CLIProxyAPI/v8/internal/misc"
+	"github.com/router-for-me/CLIProxyAPI/v8/internal/registry"
+	"github.com/router-for-me/CLIProxyAPI/v8/sdk/cliproxy"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
@@ -84,9 +84,9 @@ func getOrInitManagementKey(configDir string) string {
 		}
 	}
 
-	defaultKey := "admin8317"
-	_ = os.WriteFile(keyFile, []byte(defaultKey), 0600)
-	return defaultKey
+	generatedKey := "cpa-mgmt-" + generateRandomHex(16)
+	_ = os.WriteFile(keyFile, []byte(generatedKey), 0600)
+	return generatedKey
 }
 
 func ensureInitialConfigFile(cfgPath, host string, port int, authDir string, mgmtKey string) error {
