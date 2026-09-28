@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:pathData="M0,0h108v108h-108z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="0"
+                android:startY="0"
+                android:endX="108"
+                android:endY="108">
+                <item android:offset="0.0" android:color="#0D1730" />
+                <item android:offset="0.6" android:color="#070D1E" />
+                <item android:offset="1.0" android:color="#03060C" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Subtle ambient glow circle behind the hypercube -->
+    <path
+        android:pathData="M 54,20 A 34,34 0 1,0 54,88 A 34,34 0 1,0 54,20"
+        android:strokeWidth="1.2"
+        android:strokeColor="#1E325A"
+        android:strokeAlpha="0.4" />
+</vector>
