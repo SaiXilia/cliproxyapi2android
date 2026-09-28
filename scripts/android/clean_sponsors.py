@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Clean third-party sponsor assets and funding configurations.
+Clean third-party sponsor assets, funding configurations, desktop files, and examples.
 """
 import os
 import glob
+import shutil
 
 def clean_assets():
     # Remove all sponsor image files in assets/ root (keep assets/logo/)
@@ -15,20 +16,38 @@ def clean_assets():
             except OSError:
                 pass
 
-    funding = os.path.join('.github', 'FUNDING.yml')
-    if os.path.exists(funding):
-        os.remove(funding)
-        print("Removed .github/FUNDING.yml")
+    for f in (
+        os.path.join('.github', 'FUNDING.yml'),
+        'README_JA.md',
+        'Dockerfile',
+        '.dockerignore',
+        'docker-compose.yml',
+        'docker-compose.cluster.yml',
+        'docker-build.sh',
+        'docker-build.ps1',
+        '.env.cluster.example'
+    ):
+        if os.path.exists(f):
+            try:
+                os.remove(f)
+                print(f"Removed: {f}")
+            except OSError:
+                pass
 
-    issue_template = os.path.join('.github', 'ISSUE_TEMPLATE')
-    if os.path.exists(issue_template):
-        import shutil
-        shutil.rmtree(issue_template, ignore_errors=True)
-        print("Removed .github/ISSUE_TEMPLATE")
+    for d in (
+        os.path.join('.github', 'ISSUE_TEMPLATE'),
+        'examples'
+    ):
+        if os.path.exists(d):
+            shutil.rmtree(d, ignore_errors=True)
+            print(f"Removed directory: {d}")
 
-    # Clean leftover Japanese readme if recreated by upstream merge
-    if os.path.exists('README_JA.md'):
-        os.remove('README_JA.md')
+    # Remove desktop markdown docs
+    for doc in glob.glob(os.path.join('docs', 'sdk-*.md')):
+        try:
+            os.remove(doc)
+        except OSError:
+            pass
 
 if __name__ == '__main__':
     clean_assets()
