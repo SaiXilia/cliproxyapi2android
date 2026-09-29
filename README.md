@@ -41,7 +41,7 @@ CLIProxyAPI Android runs a local AI proxy gateway directly on Android devices. I
 
 ### 1. Install the APK
 
-Download the APK from the [latest Release](https://github.com/SaiXilia/cliproxyapi2android/releases/latest). Android may ask you to allow installation from your browser or file manager. Release APKs are signed, and in-app updates verify the package name, version code, SHA-256 digest, and signing certificate.
+Download the APK matching your device architecture from the [latest Release](https://github.com/SaiXilia/cliproxyapi2android/releases/latest). Most Android phones use `arm64-v8a`; `x86_64` is mainly for emulators and Intel-based devices. Android may ask you to allow installation from your browser or file manager. Release APKs are signed, and in-app updates automatically select the matching architecture and verify the package name, version code, SHA-256 digest, and signing certificate.
 
 ### 2. Start Service
 Open the app and tap **"启动服务" (Start Service)**. A persistent notification will appear in the status bar indicating service status.
@@ -103,10 +103,10 @@ The app does not request contacts, location, camera, microphone, or storage acce
   ```
 
 ### Cloud Builds & Signed Releases
-- **Continuous Integration**: Pushing code or opening a pull request triggers GitHub Actions to cross-compile the Go core and package a test APK, available under the Actions tab.
+- **Continuous Integration**: Pushing code or opening a pull request triggers GitHub Actions to cross-compile the Go core and package architecture-specific test APKs, available under the Actions tab.
 - **Manual App Releases**: Normal pushes only create test artifacts. To publish accumulated Android fixes, run **Release Signed Android Update** and enter the next app version, such as `1.1.2`.
 - **Automatic Core Releases**: The daily stable-upstream workflow detects new official `router-for-me/CLIProxyAPI` releases, merges and validates them, then publishes the new core without changing the manually selected Android app version.
-- **Release Versions**: App and core versions remain independent. A release is displayed as `CLIProxyAPI Android 1.1.2 · Core 8.0.4` and uses the concise tag `1.1.2-core.8.0.4`. Android's internal version code still increases for every release. Each release includes the signed APK, `update.json`, and SHA-256 checksums.
+- **Release Versions**: App and core versions remain independent. A release is displayed as `CLIProxyAPI Android 1.1.2 · Core 8.0.4` and uses the concise tag `1.1.2-core.8.0.4`. Android's internal version code still increases for every release. Each release includes separate signed `arm64-v8a` and `x86_64` APKs, `update.json`, and SHA-256 checksums.
 
 ### Updates and security
 

@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   release:
-    name: Build, verify, and publish Android APK
+    name: Build, verify, and publish Android APKs
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -175,7 +175,7 @@ jobs:
             -o android/app/src/main/jniLibs/x86_64/libcliproxy.so ./cmd/mobile
           rm -f android/app/src/main/jniLibs/x86_64/libcliproxy.h
 
-      - name: Build signed release APK
+      - name: Build signed release APKs
         working-directory: android
         env:
           VERSION_CODE: ${{ steps.version.outputs.version_code }}
@@ -193,11 +193,18 @@ jobs:
             -PappVersionName="$VERSION_NAME" \
             -PcoreVersion="$CORE_VERSION"
 
-      - name: Verify APK signature
+      - name: Verify APK signatures
         run: |
           set -euo pipefail
           apksigner_path="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
-          "$apksigner_path" verify --verbose --print-certs android/app/build/outputs/apk/release/app-release.apk
+          apks=(
+            android/app/build/outputs/apk/release/app-arm64-v8a-release.apk
+            android/app/build/outputs/apk/release/app-x86_64-release.apk
+          )
+          for apk in "${apks[@]}"; do
+            [[ -f "$apk" ]] || { echo "Missing release APK: $apk" >&2; exit 1; }
+            "$apksigner_path" verify --verbose --print-certs "$apk"
+          done
 
       - name: Prepare update manifest and checksums
         env:
@@ -209,26 +216,43 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release-assets
-          apk_name="CLIProxyAPI-Android-$RELEASE_TAG.apk"
-          cp android/app/build/outputs/apk/release/app-release.apk "release-assets/$apk_name"
+          arm64_apk_name="CLIProxyAPI-Android-$RELEASE_TAG-arm64-v8a.apk"
+          x86_64_apk_name="CLIProxyAPI-Android-$RELEASE_TAG-x86_64.apk"
+          cp android/app/build/outputs/apk/release/app-arm64-v8a-release.apk "release-assets/$arm64_apk_name"
+          cp android/app/build/outputs/apk/release/app-x86_64-release.apk "release-assets/$x86_64_apk_name"
           cp LICENSE NOTICE.md release-assets/
-          apk_sha256="$(sha256sum "release-assets/$apk_name" | awk '{print $1}')"
-          export APK_NAME="$apk_name" APK_SHA256="$apk_sha256"
+          arm64_apk_sha256="$(sha256sum "release-assets/$arm64_apk_name" | awk '{print $1}')"
+          x86_64_apk_sha256="$(sha256sum "release-assets/$x86_64_apk_name" | awk '{print $1}')"
+          export ARM64_APK_NAME="$arm64_apk_name" ARM64_APK_SHA256="$arm64_apk_sha256"
+          export X86_64_APK_NAME="$x86_64_apk_name" X86_64_APK_SHA256="$x86_64_apk_sha256"
           python3 - <<'PY'
           import json
           import os
 
+          release_base_url = (
+              f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/releases/download/"
+              f"{os.environ['RELEASE_TAG']}"
+          )
+          arm64_url = f"{release_base_url}/{os.environ['ARM64_APK_NAME']}"
+          x86_64_url = f"{release_base_url}/{os.environ['X86_64_APK_NAME']}"
           manifest = {
               "schema_version": 1,
               "version_code": int(os.environ["VERSION_CODE"]),
               "version_name": os.environ["VERSION_NAME"],
               "core_version": os.environ["CORE_VERSION"],
               "package_name": "com.cliproxy",
-              "apk_url": (
-                  f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/releases/download/"
-                  f"{os.environ['RELEASE_TAG']}/{os.environ['APK_NAME']}"
-              ),
-              "sha256": os.environ["APK_SHA256"],
+              "apk_url": arm64_url,
+              "sha256": os.environ["ARM64_APK_SHA256"],
+              "packages": {
+                  "arm64-v8a": {
+                      "apk_url": arm64_url,
+                      "sha256": os.environ["ARM64_APK_SHA256"],
+                  },
+                  "x86_64": {
+                      "apk_url": x86_64_url,
+                      "sha256": os.environ["X86_64_APK_SHA256"],
+                  },
+              },
               "release_notes": (
                   f"Android app {os.environ['APP_VERSION']}; "
                   f"CLIProxyAPI core {os.environ['CORE_VERSION']}"
@@ -240,7 +264,7 @@ jobs:
           PY
           (
             cd release-assets
-            sha256sum "$apk_name" update.json LICENSE NOTICE.md > checksums.txt
+            sha256sum "$arm64_apk_name" "$x86_64_apk_name" update.json LICENSE NOTICE.md > checksums.txt
           )
 
       - name: Remove release signing key
@@ -283,11 +307,10 @@ jobs:
 
             ## Package information
 
-            - Signed Android APK
-            - Supports `arm64-v8a` and `x86_64`
+            - Separate signed APKs for `arm64-v8a` phones and `x86_64` emulators/devices
             - Existing settings and OAuth sign-in data are preserved during a normal update
             - License and upstream attribution are included with the release assets
 
-            Download the APK from **Assets** below and install it over the existing version.
+            Download the APK matching your device architecture from **Assets** below and install it over the existing version. Most Android phones use `arm64-v8a`.
           files: |
             release-assets/*

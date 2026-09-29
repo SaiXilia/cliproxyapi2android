@@ -42,13 +42,21 @@ data class AppUpdate(
     companion object {
         fun fromJson(raw: String): AppUpdate {
             val json = JSONObject(raw)
+            val packages = json.optJSONObject("packages")
+            val selectedPackage = if (packages == null) {
+                json
+            } else {
+                Build.SUPPORTED_ABIS
+                    .firstNotNullOfOrNull { abi -> packages.optJSONObject(abi) }
+                    ?: error("No update package is available for this device architecture")
+            }
             return AppUpdate(
                 versionCode = json.getLong("version_code"),
                 versionName = json.getString("version_name"),
                 coreVersion = json.getString("core_version"),
                 packageName = json.getString("package_name"),
-                apkUrl = json.getString("apk_url"),
-                sha256 = json.getString("sha256").lowercase(Locale.US),
+                apkUrl = selectedPackage.getString("apk_url"),
+                sha256 = selectedPackage.getString("sha256").lowercase(Locale.US),
                 releaseNotes = json.optString("release_notes")
             )
         }

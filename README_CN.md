@@ -41,7 +41,7 @@ CLIProxyAPI Android 在 Android 设备上本地运行 AI 代理网关，为本�
 
 ### 1. 安装 APK
 
-从[最新 Release](https://github.com/SaiXilia/cliproxyapi2android/releases/latest)下载 APK。Android 可能要求允许浏览器或文件管理器安装未知来源应用。正式 APK 使用固定证书签名；应用内更新还会校验包名、版本号、SHA-256 与签名证书。
+从[最新 Release](https://github.com/SaiXilia/cliproxyapi2android/releases/latest)下载与设备架构匹配的 APK。绝大多数 Android 手机使用 `arm64-v8a`；`x86_64` 主要用于模拟器及采用 Intel 处理器的设备。Android 可能要求允许浏览器或文件管理器安装未知来源应用。正式 APK 使用固定证书签名；应用内更新会自动选择匹配的架构，并校验包名、版本号、SHA-256 与签名证书。
 
 ### 2. 启动服务
 安装并打开应用，点击主界面的【启动服务】按钮，通知栏将常驻显示服务运行状态。
@@ -103,10 +103,10 @@ http://127.0.0.1:8317/management.html
   ```
 
 ### 云端构建与签名发布
-- **持续集成构建**：推送代码或创建 Pull Request 后，GitHub Actions 会自动完成 Go 核心交叉编译并打包测试版 APK，可在 Actions 页面下载。
+- **持续集成构建**：推送代码或创建 Pull Request 后，GitHub Actions 会自动完成 Go 核心交叉编译并按架构打包测试版 APK，可在 Actions 页面下载。
 - **手动发布应用版本**：普通代码推送只生成测试构建，不会创建 Release。需要发布累积的 Android 修复时，手动运行 **Release Signed Android Update**，填写下一个应用版本号，例如 `1.1.2`。
 - **自动发布核心版本**：每日稳定版同步流程会检测 `router-for-me/CLIProxyAPI` 的最新正式版本；发现新版后会自动合并、验证并发布，但不会改变由你手动指定的 Android 应用版本。
-- **独立版本格式**：应用版本与核心版本相互独立。Release 显示为 `CLIProxyAPI Android 1.1.2 · Core 8.0.4`，使用简洁 Tag `1.1.2-core.8.0.4`；每次发布仍会提高 Android 内部 `versionCode`。每个版本附带签名 APK、`update.json` 与 SHA-256 校验文件。
+- **独立版本格式**：应用版本与核心版本相互独立。Release 显示为 `CLIProxyAPI Android 1.1.2 · Core 8.0.4`，使用简洁 Tag `1.1.2-core.8.0.4`；每次发布仍会提高 Android 内部 `versionCode`。每个版本附带独立的 `arm64-v8a` 与 `x86_64` 签名 APK、`update.json` 与 SHA-256 校验文件。
 
 ### 更新与安全
 

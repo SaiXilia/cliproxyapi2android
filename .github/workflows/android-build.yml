@@ -1,4 +1,4 @@
-name: Build Android APK and Core
+name: Build Android APKs and Core
 
 on:
   push:
@@ -34,7 +34,7 @@ permissions:
 
 jobs:
   build:
-    name: Build Android APK & Native Core
+    name: Build Android APKs & Native Core
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -98,14 +98,14 @@ jobs:
             -o android/app/src/main/jniLibs/x86_64/libcliproxy.so ./cmd/mobile
           rm -f android/app/src/main/jniLibs/x86_64/libcliproxy.h
 
-      - name: Build Android APK
+      - name: Build Android APKs
         working-directory: android
         run: |
           chmod +x gradlew
           core_version="$(tr -d '[:space:]' < ../.github/upstream-version)"
           ./gradlew assembleDebug -PcoreVersion="${core_version#v}"
 
-      - name: Upload APK & CLI Binary Artifacts
+      - name: Upload APKs & CLI Binary Artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: cliproxy-android-artifacts
