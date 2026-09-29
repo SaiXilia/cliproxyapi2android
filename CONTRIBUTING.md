@@ -14,7 +14,7 @@ Security vulnerabilities must follow [SECURITY.md](SECURITY.md) instead of a pub
 ## Pull requests
 
 1. Keep Android-specific changes focused and preserve upstream compatibility.
-2. Use English for code comments and new general documentation. Update `README_CN.md` when user-facing behavior changes.
+2. Use English for code comments and new general documentation. Keep the default Chinese `README.md` and English `README_EN.md` synchronized when user-facing behavior changes.
 3. Run the relevant tests and the required server compile check:
 
    ```bash
