@@ -24,7 +24,6 @@ import com.cliproxy.service.CLIProxyForegroundService
 import com.cliproxy.update.AppUpdate
 import com.cliproxy.update.UpdateCheckResult
 import com.cliproxy.update.UpdateManager
-import com.cliproxy.update.UpdateJobService
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textfield.TextInputEditText
@@ -241,8 +240,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         checkNotificationPermission()
-        UpdateJobService.schedule(this)
-        if (UpdateManager.shouldCheckOnStartup(this)) {
+        UpdateManager.cancelLegacyBackgroundCheck(this)
+        if (savedInstanceState == null) {
             checkForUpdates(silent = true)
         }
         startStatusChecker()
@@ -267,11 +266,6 @@ class MainActivity : AppCompatActivity() {
             startProxy(configDir)
         } else if (intent.getBooleanExtra("stop_service", false)) {
             stopProxy()
-        }
-        if (intent.getBooleanExtra(EXTRA_SHOW_UPDATE, false)) {
-            showCachedUpdate()
-            if (availableUpdate == null) checkForUpdates(silent = false)
-            intent.removeExtra(EXTRA_SHOW_UPDATE)
         }
     }
 
@@ -908,7 +902,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val EXTRA_SHOW_UPDATE = "show_update"
         private const val NETWORK_PREFERENCES = "network_settings"
         private const val KEY_LAN_ACCESS_ENABLED = "lan_access_enabled"
     }

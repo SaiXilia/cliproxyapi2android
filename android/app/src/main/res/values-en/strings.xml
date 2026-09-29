@@ -85,10 +85,6 @@
     <string name="update_install_permission_required">Allow updates from this app, then return to continue</string>
     <string name="update_download_failed">Update download or verification failed: %1$s</string>
     <string name="unknown_error">Unknown error</string>
-    <string name="update_notification_channel">App and proxy core updates</string>
-    <string name="update_notification_title">CLIProxy API update available</string>
-    <string name="update_notification_message">Proxy core %1$s is ready; tap to review</string>
-
     <string name="network_vpn_title">Network and VPN compatibility</string>
     <string name="network_vpn_description">• The service listens only on 127.0.0.1. It is available to clients on this device and cannot be reached from other LAN devices.\n• If access stops working after enabling VPN or proxy software, enable Bypass local addresses or Bypass LAN in its core settings. You can also exclude the client with per-app proxy settings or add a direct routing rule for 127.0.0.0/8.\n• Per-app bypass sends all traffic from the selected client outside the VPN. Enable it only when needed.</string>
     <string name="network_vpn_description_lan">• The service listens on 0.0.0.0. Devices on the same LAN can use the address shown above, while this device can still use 127.0.0.1.\n• Enable this only on trusted networks and use an API key when possible. A system firewall or router client isolation may block connections.\n• VPN or proxy software can change routing. If connections fail, check Bypass local addresses, Bypass LAN, and per-app proxy settings.</string>

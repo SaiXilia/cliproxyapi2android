@@ -1,5 +1,6 @@
 package com.cliproxy.update
 
+import android.app.job.JobScheduler
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInfo
@@ -76,17 +77,12 @@ object UpdateManager {
     private const val USER_AGENT = "CLIProxyAPI-Android/${BuildConfig.VERSION_NAME}"
     private const val PREFS_NAME = "app_update"
     private const val KEY_AVAILABLE_UPDATE = "available_update"
-    private const val KEY_LAST_CHECK = "last_check"
-    private const val STARTUP_CHECK_INTERVAL_MS = 6L * 60L * 60L * 1000L
+    private const val LEGACY_UPDATE_JOB_ID = 8318
     private const val MAX_MANIFEST_BYTES = 256 * 1024
     private const val MAX_APK_BYTES = 512L * 1024L * 1024L
     private const val MAX_REDIRECTS = 5
 
     suspend fun checkForUpdate(context: Context): UpdateCheckResult = withContext(Dispatchers.IO) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putLong(KEY_LAST_CHECK, System.currentTimeMillis())
-            .apply()
         try {
             val manifest = fetchManifest()
             if (manifest.packageName != context.packageName) {
@@ -113,10 +109,9 @@ object UpdateManager {
         }
     }
 
-    fun shouldCheckOnStartup(context: Context): Boolean {
-        val lastCheck = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getLong(KEY_LAST_CHECK, 0L)
-        return System.currentTimeMillis() - lastCheck >= STARTUP_CHECK_INTERVAL_MS
+    fun cancelLegacyBackgroundCheck(context: Context) {
+        val scheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+        scheduler.cancel(LEGACY_UPDATE_JOB_ID)
     }
 
     fun loadCachedUpdate(context: Context): AppUpdate? {
