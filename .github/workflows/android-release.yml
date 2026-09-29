@@ -85,7 +85,7 @@ jobs:
             exit 1
           fi
 
-          release_tag="android-v$app_version-core.$core_version"
+          release_tag="android-v$app_version"
           source_commit="$(git rev-parse HEAD)"
           if git show-ref --verify --quiet "refs/tags/$release_tag"; then
             tag_commit="$(git rev-list -n 1 "$release_tag")"
@@ -99,7 +99,7 @@ jobs:
             echo "Android version code is out of range: $version_code" >&2
             exit 1
           fi
-          version_name="$app_version-core.$core_version"
+          version_name="$app_version"
           echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
           echo "app_version=$app_version" >> "$GITHUB_OUTPUT"
           echo "core_version=$core_version" >> "$GITHUB_OUTPUT"

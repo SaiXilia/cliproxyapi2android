@@ -27,6 +27,7 @@ jobs:
       release_tag: ${{ steps.sync.outputs.release_tag }}
       source_ref: ${{ steps.sync.outputs.source_ref }}
       app_version: ${{ steps.sync.outputs.app_version }}
+      core_version: ${{ steps.sync.outputs.core_version }}
 
     steps:
       - name: Checkout Android repository
@@ -76,7 +77,7 @@ jobs:
             exit 1
           fi
           core_version="${upstream_tag#v}"
-          release_tag="android-v$app_version-core.$core_version"
+          release_tag="android-v$app_version"
           if [[ "$current_tag" == "$upstream_tag" ]]; then
             echo "CLIProxyAPI $upstream_tag is already integrated"
             release_json="$RUNNER_TEMP/android-release.json"
@@ -117,8 +118,11 @@ jobs:
 
           with open(os.environ["UPDATE_JSON"], encoding="utf-8") as update_file:
               update = json.load(update_file)
-          expected_name = f"{os.environ['APP_VERSION']}-core.{os.environ['CORE_VERSION']}"
-          if update.get("version_name") != expected_name:
+          accepted_names = {
+              os.environ["APP_VERSION"],
+              f"{os.environ['APP_VERSION']}-core.{os.environ['CORE_VERSION']}",
+          }
+          if update.get("version_name") not in accepted_names:
               raise SystemExit(1)
           if update.get("core_version") != os.environ["CORE_VERSION"]:
               raise SystemExit(1)
@@ -139,6 +143,7 @@ jobs:
             echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
             echo "source_ref=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
             echo "app_version=$app_version" >> "$GITHUB_OUTPUT"
+            echo "core_version=$core_version" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -150,6 +155,10 @@ jobs:
             echo "Requested upstream tag $upstream_tag is not newer than integrated tag $current_tag" >&2
             exit 1
           fi
+
+          IFS='.' read -r app_major app_minor app_patch <<< "$app_version"
+          app_version="$app_major.$app_minor.$((app_patch + 1))"
+          release_tag="android-v$app_version"
 
           set +e
           git merge --no-commit --no-ff "$upstream_tag"
@@ -186,6 +195,8 @@ jobs:
             .github/workflows/release.yaml \
             README_JA.md
           printf '%s\n' "$upstream_tag" > .github/upstream-version
+          sed -i "s/^appVersionName=.*/appVersionName=$app_version/" android/gradle.properties
+          sed -i -E "s/(appVersionNameValue = providers\.gradleProperty\(\"appVersionName\"\)\.orNull \?: )\"[0-9]+\.[0-9]+\.[0-9]+\"/\1\"$app_version\"/" android/app/build.gradle.kts
 
           git add -A
           if git rev-parse -q --verify MERGE_HEAD >/dev/null; then
@@ -199,6 +210,7 @@ jobs:
           echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
           echo "source_ref=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "app_version=$app_version" >> "$GITHUB_OUTPUT"
+          echo "core_version=$core_version" >> "$GITHUB_OUTPUT"
 
       - name: Set up Go
         if: steps.sync.outputs.changed == 'true'
@@ -225,7 +237,7 @@ jobs:
       - name: Validate integrated Android source
         if: steps.sync.outputs.changed == 'true'
         env:
-          CORE_VERSION: ${{ steps.sync.outputs.release_tag }}
+          CORE_VERSION: ${{ steps.sync.outputs.core_version }}
           BUILD_EMULATOR: '1'
         run: |
           set -euo pipefail
@@ -236,11 +248,10 @@ jobs:
           mkdir -p android/app/src/main/jniLibs/x86_64
           cp dist/android/arm64-v8a/libcliproxy.so android/app/src/main/jniLibs/arm64-v8a/libcliproxy.so
           cp dist/android/x86_64/libcliproxy.so android/app/src/main/jniLibs/x86_64/libcliproxy.so
-          core_version="${CORE_VERSION##*-core.}"
           (
             cd android
             chmod +x gradlew
-            ./gradlew assembleDebug -PcoreVersion="$core_version"
+            ./gradlew assembleDebug -PcoreVersion="$CORE_VERSION"
           )
 
       - name: Publish integrated source
