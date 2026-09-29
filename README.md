@@ -28,7 +28,9 @@ CLIProxyAPI Android 在 Android 设备上本地运行 AI 代理网关，为本�
 
 ---
 
-## 🚀 核心大模型转译能力
+## 🚀 上游 CLIProxyAPI 核心能力
+
+以下能力由上游 [router-for-me/CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) 提供，本项目负责将其集成到 Android 端。
 
 - **多协议双向转换**：OpenAI ⇄ Anthropic ⇄ Gemini ⇄ Codex 协议兼容转译。
 - **深度思考（Thinking）**：保留 Anthropic Extended Thinking (`budget_tokens`)、Gemini 思考配置以及 OpenAI `reasoning_effort`。

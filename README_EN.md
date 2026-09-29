@@ -28,7 +28,9 @@ CLIProxyAPI Android runs a local AI proxy gateway directly on Android devices. I
 
 ---
 
-## 🚀 Core Model Capabilities
+## 🚀 Upstream CLIProxyAPI Core Capabilities
+
+The following capabilities are provided by the upstream [router-for-me/CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) project and integrated into Android by this project.
 
 - **Bidirectional Protocol Translation**: Transparent conversion between OpenAI ⇄ Anthropic ⇄ Gemini ⇄ Codex protocols.
 - **Extended Thinking**: Preserves Anthropic Extended Thinking (`budget_tokens`), Gemini thinking configurations, and OpenAI `reasoning_effort`.
