@@ -26,6 +26,7 @@ jobs:
       publish: ${{ steps.sync.outputs.publish }}
       release_tag: ${{ steps.sync.outputs.release_tag }}
       source_ref: ${{ steps.sync.outputs.source_ref }}
+      app_version: ${{ steps.sync.outputs.app_version }}
 
     steps:
       - name: Checkout Android repository
@@ -69,48 +70,62 @@ jobs:
           git rev-parse --verify "refs/tags/$upstream_tag" >/dev/null
 
           current_tag="$(tr -d '[:space:]' < .github/upstream-version)"
-          release_tag="android-core-$upstream_tag"
+          app_version="$(sed -n 's/^appVersionName=//p' android/gradle.properties | tail -n 1 | tr -d '[:space:]')"
+          if [[ ! "$app_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Unsupported Android app version: $app_version" >&2
+            exit 1
+          fi
+          core_version="${upstream_tag#v}"
+          release_tag="android-v$app_version-core.$core_version"
           if [[ "$current_tag" == "$upstream_tag" ]]; then
             echo "CLIProxyAPI $upstream_tag is already integrated"
-            if ! git show-ref --verify --quiet "refs/tags/$release_tag"; then
-              git tag -a "$release_tag" -m "Android build for CLIProxyAPI $upstream_tag"
-              git push origin "$release_tag"
-            fi
-
             release_json="$RUNNER_TEMP/android-release.json"
+            update_json="$RUNNER_TEMP/android-update.json"
             release_ready=false
             if curl --fail --silent --show-error \
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer $GH_TOKEN" \
               -H "X-GitHub-Api-Version: 2022-11-28" \
-              "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/tags/$release_tag" \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/latest" \
               -o "$release_json"; then
-              if RELEASE_JSON="$release_json" RELEASE_TAG="$release_tag" python3 - <<'PY'
+              update_url="$(RELEASE_JSON="$release_json" python3 - <<'PY'
           import json
           import os
 
           with open(os.environ["RELEASE_JSON"], encoding="utf-8") as release_file:
               release = json.load(release_file)
-          release_tag = os.environ["RELEASE_TAG"]
-          expected_assets = {
-              f"CLIProxyAPI-Android-{release_tag}.apk",
-              "checksums.txt",
-              "update.json",
-          }
-          actual_assets = {
-              asset["name"]: asset.get("size", 0)
-              for asset in release.get("assets", [])
-          }
-          if (
-              release.get("draft")
-              or release.get("prerelease")
-              or not expected_assets.issubset(actual_assets)
-              or any(actual_assets[name] <= 0 for name in expected_assets)
-          ):
+          if release.get("draft") or release.get("prerelease"):
+              raise SystemExit(1)
+          assets = {asset["name"]: asset for asset in release.get("assets", [])}
+          if "update.json" not in assets or assets["update.json"].get("size", 0) <= 0:
+              raise SystemExit(1)
+          if "checksums.txt" not in assets or assets["checksums.txt"].get("size", 0) <= 0:
+              raise SystemExit(1)
+          if not any(name.endswith(".apk") and asset.get("size", 0) > 0 for name, asset in assets.items()):
+              raise SystemExit(1)
+          print(assets["update.json"]["url"])
+          PY
+              )"
+              if [[ -n "$update_url" ]] && curl --fail --silent --show-error --location \
+                -H "Accept: application/octet-stream" \
+                -H "Authorization: Bearer $GH_TOKEN" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                "$update_url" -o "$update_json"; then
+                if UPDATE_JSON="$update_json" APP_VERSION="$app_version" CORE_VERSION="$core_version" python3 - <<'PY'
+          import json
+          import os
+
+          with open(os.environ["UPDATE_JSON"], encoding="utf-8") as update_file:
+              update = json.load(update_file)
+          expected_name = f"{os.environ['APP_VERSION']}-core.{os.environ['CORE_VERSION']}"
+          if update.get("version_name") != expected_name:
+              raise SystemExit(1)
+          if update.get("core_version") != os.environ["CORE_VERSION"]:
               raise SystemExit(1)
           PY
               then
                 release_ready=true
+              fi
               fi
             fi
 
@@ -122,14 +137,11 @@ jobs:
               echo "publish=true" >> "$GITHUB_OUTPUT"
             fi
             echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
-            echo "source_ref=$release_tag" >> "$GITHUB_OUTPUT"
+            echo "source_ref=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            echo "app_version=$app_version" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          if git show-ref --verify --quiet "refs/tags/$release_tag"; then
-            echo "Release tag already exists before $upstream_tag is integrated: $release_tag" >&2
-            exit 1
-          fi
           if ! git rev-parse --verify "refs/tags/$current_tag" >/dev/null; then
             echo "Current integrated upstream tag does not exist: $current_tag" >&2
             exit 1
@@ -185,7 +197,8 @@ jobs:
           echo "changed=true" >> "$GITHUB_OUTPUT"
           echo "publish=true" >> "$GITHUB_OUTPUT"
           echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
-          echo "source_ref=$release_tag" >> "$GITHUB_OUTPUT"
+          echo "source_ref=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "app_version=$app_version" >> "$GITHUB_OUTPUT"
 
       - name: Set up Go
         if: steps.sync.outputs.changed == 'true'
@@ -212,7 +225,7 @@ jobs:
       - name: Validate integrated Android source
         if: steps.sync.outputs.changed == 'true'
         env:
-          RELEASE_TAG: ${{ steps.sync.outputs.release_tag }}
+          CORE_VERSION: ${{ steps.sync.outputs.release_tag }}
           BUILD_EMULATOR: '1'
         run: |
           set -euo pipefail
@@ -223,7 +236,7 @@ jobs:
           mkdir -p android/app/src/main/jniLibs/x86_64
           cp dist/android/arm64-v8a/libcliproxy.so android/app/src/main/jniLibs/arm64-v8a/libcliproxy.so
           cp dist/android/x86_64/libcliproxy.so android/app/src/main/jniLibs/x86_64/libcliproxy.so
-          core_version="${RELEASE_TAG#android-core-v}"
+          core_version="${CORE_VERSION##*-core.}"
           (
             cd android
             chmod +x gradlew
@@ -232,13 +245,9 @@ jobs:
 
       - name: Publish integrated source
         if: steps.sync.outputs.changed == 'true'
-        env:
-          RELEASE_TAG: ${{ steps.sync.outputs.release_tag }}
         run: |
           set -euo pipefail
           git push origin HEAD:main
-          git tag -a "$RELEASE_TAG" -m "Android build for CLIProxyAPI ${RELEASE_TAG#android-core-}"
-          git push origin "$RELEASE_TAG"
 
   release:
     name: Build signed Android update
@@ -246,5 +255,6 @@ jobs:
     if: needs.sync.outputs.publish == 'true'
     uses: ./.github/workflows/android-release.yml
     with:
+      app_version: ${{ needs.sync.outputs.app_version }}
       source_ref: ${{ needs.sync.outputs.source_ref }}
     secrets: inherit

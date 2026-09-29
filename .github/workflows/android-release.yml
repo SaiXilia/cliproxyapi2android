@@ -3,14 +3,18 @@ name: Release Signed Android Update
 on:
   workflow_call:
     inputs:
+      app_version:
+        description: 'Android app version, for example 1.1.2'
+        required: true
+        type: string
       source_ref:
-        description: 'Integrated release tag, for example android-app-v1.1.1'
+        description: 'Integrated source commit produced by the upstream sync workflow'
         required: true
         type: string
   workflow_dispatch:
     inputs:
-      source_ref:
-        description: 'Integrated release tag, for example android-app-v1.1.1'
+      app_version:
+        description: 'Android app version to publish, for example 1.1.2'
         required: true
         type: string
 
@@ -18,7 +22,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: release-signed-android-${{ inputs.source_ref }}
+  group: release-signed-android-${{ inputs.app_version }}-${{ inputs.source_ref || 'main' }}
   cancel-in-progress: false
 
 jobs:
@@ -31,12 +35,36 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ inputs.source_ref }}
+          ref: ${{ inputs.source_ref || 'main' }}
+
+      - name: Record manually selected app version
+        if: inputs.source_ref == ''
+        env:
+          APP_VERSION: ${{ inputs.app_version }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$APP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Unsupported Android app version: $APP_VERSION" >&2
+            exit 1
+          fi
+
+          current_version="$(sed -n 's/^appVersionName=//p' android/gradle.properties | tail -n 1 | tr -d '[:space:]')"
+          if [[ "$current_version" == "$APP_VERSION" ]]; then
+            exit 0
+          fi
+
+          sed -i "s/^appVersionName=.*/appVersionName=$APP_VERSION/" android/gradle.properties
+          sed -i -E "s/(appVersionNameValue = providers\.gradleProperty\(\"appVersionName\"\)\.orNull \?: )\"[0-9]+\.[0-9]+\.[0-9]+\"/\1\"$APP_VERSION\"/" android/app/build.gradle.kts
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add android/gradle.properties android/app/build.gradle.kts
+          git commit -m "chore(android): set app version $APP_VERSION"
+          git push origin HEAD:main
 
       - name: Resolve version metadata
         id: version
         env:
-          SOURCE_REF: ${{ inputs.source_ref }}
+          REQUESTED_APP_VERSION: ${{ inputs.app_version }}
         run: |
           set -euo pipefail
           integrated_tag="$(tr -d '[:space:]' < .github/upstream-version)"
@@ -47,42 +75,24 @@ jobs:
           core_tag="$integrated_tag"
           core_version="${core_tag#v}"
 
-          app_version=""
-          if [[ -f android/gradle.properties ]]; then
-            app_version="$(sed -n 's/^appVersionName=//p' android/gradle.properties | tail -n 1 | tr -d '[:space:]')"
-          fi
-          if [[ -z "$app_version" ]]; then
-            app_version="1.1.0"
-          fi
+          app_version="$(sed -n 's/^appVersionName=//p' android/gradle.properties | tail -n 1 | tr -d '[:space:]')"
           if [[ ! "$app_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Unsupported Android app version: $app_version" >&2
             exit 1
           fi
+          if [[ "$app_version" != "$REQUESTED_APP_VERSION" ]]; then
+            echo "Requested app version $REQUESTED_APP_VERSION does not match source version $app_version" >&2
+            exit 1
+          fi
 
-          if [[ "$SOURCE_REF" =~ ^android-core-(v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?)$ ]]; then
-            if [[ "${BASH_REMATCH[1]}" != "$core_tag" ]]; then
-              echo "Release tag $SOURCE_REF does not match integrated core $core_tag" >&2
-              exit 1
-            fi
-          elif [[ "$SOURCE_REF" =~ ^android-app-v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-            if [[ "${BASH_REMATCH[1]}" != "$app_version" ]]; then
-              echo "Release tag $SOURCE_REF does not match Android app version $app_version" >&2
-              exit 1
-            fi
-          else
-            echo "Unsupported Android release tag: $SOURCE_REF" >&2
-            exit 1
-          fi
-          release_tag="$SOURCE_REF"
-          if ! git show-ref --verify --quiet "refs/tags/$release_tag"; then
-            echo "Release tag does not exist in the repository: $release_tag" >&2
-            exit 1
-          fi
-          tag_commit="$(git rev-list -n 1 "$release_tag")"
+          release_tag="android-v$app_version-core.$core_version"
           source_commit="$(git rev-parse HEAD)"
-          if [[ "$tag_commit" != "$source_commit" ]]; then
-            echo "Release tag $release_tag does not point to the checked-out source" >&2
-            exit 1
+          if git show-ref --verify --quiet "refs/tags/$release_tag"; then
+            tag_commit="$(git rev-list -n 1 "$release_tag")"
+            if [[ "$tag_commit" != "$source_commit" ]]; then
+              echo "Release tag $release_tag already points to a different source commit" >&2
+              exit 1
+            fi
           fi
           version_code=$((10000000 + $(git rev-list --count HEAD)))
           if (( version_code <= 0 || version_code > 2100000000 )); then
@@ -93,6 +103,7 @@ jobs:
           echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
           echo "app_version=$app_version" >> "$GITHUB_OUTPUT"
           echo "core_version=$core_version" >> "$GITHUB_OUTPUT"
+          echo "source_commit=$source_commit" >> "$GITHUB_OUTPUT"
           echo "version_code=$version_code" >> "$GITHUB_OUTPUT"
           echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
 
@@ -228,6 +239,20 @@ jobs:
             cd release-assets
             sha256sum "$apk_name" update.json > checksums.txt
           )
+
+      - name: Create unified release tag
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
+          VERSION_NAME: ${{ steps.version.outputs.version_name }}
+        run: |
+          set -euo pipefail
+          if git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$RELEASE_TAG" -m "CLIProxyAPI Android $VERSION_NAME"
+          git push origin "$RELEASE_TAG"
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2

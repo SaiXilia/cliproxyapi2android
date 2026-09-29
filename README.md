@@ -77,8 +77,9 @@ Monitor account quota pools, manage model aliases, and inspect operational metri
 
 ### Cloud Automated Build & Official Releases
 - **Continuous Integration**: Pushing code triggers GitHub Actions to cross-compile the Go core and package the APK automatically, available under the Actions tab.
-- **Automated Releases**: The daily stable-upstream workflow detects the latest official `router-for-me/CLIProxyAPI` release, merges it, rebuilds both Android ABIs, signs the APK, and publishes the APK together with `update.json` and SHA-256 checksums. The release workflow can also be started manually.
-- **App-only Releases**: Android UI or integration fixes can be published without changing the proxy core by bumping `appVersionName` and using an `android-app-vX.Y.Z` tag.
+- **Manual App Releases**: Normal pushes only create test artifacts. To publish accumulated Android fixes, run **Release Signed Android Update** and enter the next app version, such as `1.1.2`.
+- **Automatic Core Releases**: The daily stable-upstream workflow detects new official `router-for-me/CLIProxyAPI` releases, merges and validates them, then automatically publishes the current app with the new core.
+- **Unified Versions**: Every new official release uses one tag containing both versions, such as `android-v1.1.2-core.8.0.3`, and includes the signed APK, `update.json`, and SHA-256 checksums.
 
 ### Updates and security
 
