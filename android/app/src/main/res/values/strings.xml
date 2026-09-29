@@ -93,6 +93,9 @@
     <string name="network_vpn_description">• 服务仅监听 127.0.0.1，只允许本机客户端访问，局域网内其他设备无法连接。\n• 开启 VPN 或代理软件后若无法连接，请开启【绕过局域网地址】或核心的【绕过 LAN】；也可在【分应用代理】中排除当前客户端，或为 127.0.0.0/8 添加直连路由规则。\n• 使用【分应用绕过】时，该客户端的全部流量都不会经过 VPN，请仅在需要时启用。</string>
     <string name="network_vpn_description_lan">• 服务监听 0.0.0.0，同一局域网内的设备可通过上方地址连接；本机仍可使用 127.0.0.1。\n• 请仅在可信网络中开启，并建议启用 API Key。系统防火墙或路由器的设备隔离功能可能阻止连接。\n• VPN 或代理软件可能改变路由；连接异常时请检查【绕过局域网地址】、【绕过 LAN】及分应用代理设置。</string>
 
+    <string name="background_operation_title">后台运行说明</string>
+    <string name="background_operation_description">• 请在系统设置中允许本应用自启动。\n• 请将本应用的电池使用策略设为“不受限制”。</string>
+
     <string name="clipboard_local_address">CLIProxy 本机地址</string>
     <string name="clipboard_lan_address">CLIProxy 局域网地址</string>
     <string name="clipboard_claude_local_address">CLIProxy Anthropic 本机地址</string>

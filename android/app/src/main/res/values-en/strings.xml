@@ -93,6 +93,9 @@
     <string name="network_vpn_description">• The service listens only on 127.0.0.1. It is available to clients on this device and cannot be reached from other LAN devices.\n• If access stops working after enabling VPN or proxy software, enable Bypass local addresses or Bypass LAN in its core settings. You can also exclude the client with per-app proxy settings or add a direct routing rule for 127.0.0.0/8.\n• Per-app bypass sends all traffic from the selected client outside the VPN. Enable it only when needed.</string>
     <string name="network_vpn_description_lan">• The service listens on 0.0.0.0. Devices on the same LAN can use the address shown above, while this device can still use 127.0.0.1.\n• Enable this only on trusted networks and use an API key when possible. A system firewall or router client isolation may block connections.\n• VPN or proxy software can change routing. If connections fail, check Bypass local addresses, Bypass LAN, and per-app proxy settings.</string>
 
+    <string name="background_operation_title">Background operation</string>
+    <string name="background_operation_description">• Allow this app to autostart in system settings.\n• Set this app’s battery usage to “Unrestricted.”</string>
+
     <string name="clipboard_local_address">CLIProxy local address</string>
     <string name="clipboard_lan_address">CLIProxy LAN address</string>
     <string name="clipboard_claude_local_address">CLIProxy Anthropic local address</string>
