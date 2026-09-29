@@ -85,7 +85,7 @@ jobs:
             exit 1
           fi
 
-          release_tag="android-v$app_version"
+          release_tag="$app_version-core.$core_version"
           source_commit="$(git rev-parse HEAD)"
           if git show-ref --verify --quiet "refs/tags/$release_tag"; then
             tag_commit="$(git rev-list -n 1 "$release_tag")"
@@ -240,7 +240,7 @@ jobs:
             sha256sum "$apk_name" update.json > checksums.txt
           )
 
-      - name: Create unified release tag
+      - name: Create release tag
         env:
           RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
           VERSION_NAME: ${{ steps.version.outputs.version_name }}
@@ -258,17 +258,25 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.release_tag }}
-          name: CLIProxyAPI Android ${{ steps.version.outputs.version_name }}
+          name: CLIProxyAPI Android ${{ steps.version.outputs.version_name }} · Core ${{ steps.version.outputs.core_version }}
           generate_release_notes: true
           make_latest: true
           fail_on_unmatched_files: true
           body: |
-            Android application update built from the official router-for-me/CLIProxyAPI stable release.
+            ## Version information
 
-            - App version: `${{ steps.version.outputs.version_name }}`
-            - Proxy core: `${{ steps.version.outputs.core_version }}`
-            - Android version code: `${{ steps.version.outputs.version_code }}`
+            | Component | Version |
+            | --- | --- |
+            | Android app | `${{ steps.version.outputs.version_name }}` |
+            | CLIProxyAPI core | `${{ steps.version.outputs.core_version }}` |
+            | Android version code | `${{ steps.version.outputs.version_code }}` |
 
-            The APK includes both arm64-v8a and x86_64 native cores. Existing settings and OAuth data are preserved during a normal signed update.
+            ## Package information
+
+            - Signed Android APK
+            - Supports `arm64-v8a` and `x86_64`
+            - Existing settings and OAuth sign-in data are preserved during a normal update
+
+            Download the APK from **Assets** below and install it over the existing version.
           files: |
             release-assets/*

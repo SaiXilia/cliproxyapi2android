@@ -78,8 +78,8 @@ http://127.0.0.1:8317/management.html
 ### 云端自动化编译与正式发布
 - **持续集成构建**：每次推送代码至仓库，GitHub Actions 将自动在云端完成 Go 核心交叉编译并打包出测试版 APK，可在 Actions 页面直接下载。
 - **手动发布应用版本**：普通代码推送只生成测试构建，不会创建 Release。需要发布累积的 Android 修复时，手动运行 **Release Signed Android Update**，填写下一个应用版本号，例如 `1.1.2`。
-- **自动发布核心版本**：每日稳定版同步流程会检测 `router-for-me/CLIProxyAPI` 的最新正式版本；发现新版后会自动合并、验证，将 Android 补丁版本递增一位，再搭载新版核心发布。
-- **应用版本格式**：Release 只显示常规应用版本，例如 `1.1.2`，底层使用不会与上游冲突的 `android-v1.1.2` Tag。内置核心版本记录在 Release 详情和 `update.json` 中；每个版本附带签名 APK 与 SHA-256 校验文件。
+- **自动发布核心版本**：每日稳定版同步流程会检测 `router-for-me/CLIProxyAPI` 的最新正式版本；发现新版后会自动合并、验证并发布，但不会改变由你手动指定的 Android 应用版本。
+- **独立版本格式**：应用版本与核心版本相互独立。Release 显示为 `CLIProxyAPI Android 1.1.2 · Core 8.0.4`，使用简洁 Tag `1.1.2-core.8.0.4`；每次发布仍会提高 Android 内部 `versionCode`。每个版本附带签名 APK、`update.json` 与 SHA-256 校验文件。
 
 ### 更新与安全
 

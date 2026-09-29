@@ -77,7 +77,7 @@ jobs:
             exit 1
           fi
           core_version="${upstream_tag#v}"
-          release_tag="android-v$app_version"
+          release_tag="$app_version-core.$core_version"
           if [[ "$current_tag" == "$upstream_tag" ]]; then
             echo "CLIProxyAPI $upstream_tag is already integrated"
             release_json="$RUNNER_TEMP/android-release.json"
@@ -156,10 +156,6 @@ jobs:
             exit 1
           fi
 
-          IFS='.' read -r app_major app_minor app_patch <<< "$app_version"
-          app_version="$app_major.$app_minor.$((app_patch + 1))"
-          release_tag="android-v$app_version"
-
           set +e
           git merge --no-commit --no-ff "$upstream_tag"
           merge_exit=$?
@@ -195,8 +191,6 @@ jobs:
             .github/workflows/release.yaml \
             README_JA.md
           printf '%s\n' "$upstream_tag" > .github/upstream-version
-          sed -i "s/^appVersionName=.*/appVersionName=$app_version/" android/gradle.properties
-          sed -i -E "s/(appVersionNameValue = providers\.gradleProperty\(\"appVersionName\"\)\.orNull \?: )\"[0-9]+\.[0-9]+\.[0-9]+\"/\1\"$app_version\"/" android/app/build.gradle.kts
 
           git add -A
           if git rev-parse -q --verify MERGE_HEAD >/dev/null; then
