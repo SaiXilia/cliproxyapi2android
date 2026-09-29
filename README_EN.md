@@ -119,6 +119,7 @@ The app does not request contacts, location, camera, microphone, or storage acce
 
 ## Contributing and upstream
 
-- Android-specific bug reports and contributions are welcome; read [CONTRIBUTING.md](CONTRIBUTING.md) first.
+- This project was originally created for the maintainer's personal use. Feature decisions prioritize real-world needs and long-term maintainability.
+- Android-specific issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first, and please understand that not every feature request can be accepted.
 - Never attach API keys, OAuth files, `config.yaml`, or the app's private data to a public issue.
-- Core behavior originates from [router-for-me/CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI). See [NOTICE.md](NOTICE.md) for attribution.
+- Core behavior originates from [router-for-me/CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI). Direct core-related issues and changes to the upstream project first, and see [NOTICE.md](NOTICE.md) for attribution.
