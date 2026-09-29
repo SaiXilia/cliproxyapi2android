@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/SaiXilia/cliproxyapi2android/security/advisories/new
+    about: Report vulnerabilities privately. Do not disclose credentials or security details in a public issue.
+  - name: Upstream CLIProxyAPI
+    url: https://github.com/router-for-me/CLIProxyAPI/issues
+    about: Report issues that also reproduce in the upstream CLIProxyAPI project.

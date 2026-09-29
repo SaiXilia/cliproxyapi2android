@@ -1,0 +1,77 @@
+name: Android bug report
+description: Report a reproducible problem in the Android app or integration.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Do not attach API keys, OAuth files, `config.yaml`, files from `auths/`, signing material, or unredacted logs. Report security vulnerabilities through the process in `SECURITY.md`.
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      placeholder: "For example: 1.1.1"
+    validations:
+      required: true
+  - type: input
+    id: core-version
+    attributes:
+      label: CLIProxyAPI core version
+      placeholder: "For example: 8.0.4"
+    validations:
+      required: true
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version and device
+      placeholder: "For example: Android 15, Pixel 8, arm64-v8a"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Service lifecycle
+        - Local API endpoint
+        - Management console
+        - Authentication or OAuth
+        - App update
+        - User interface
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the expected and actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Open ...
+        2. Tap ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted logs or screenshots
+      description: Remove tokens, account identifiers, local paths, and other private data before posting.
+      render: shell
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: I removed credentials and private data from this report.
+          required: true
+        - label: I confirmed this is not a security vulnerability requiring private reporting.
+          required: true

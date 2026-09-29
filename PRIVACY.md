@@ -8,7 +8,9 @@ Configuration, API keys, management credentials, OAuth credentials, and logs are
 
 ## Network connections
 
-The app listens only on `127.0.0.1` for local client connections. Depending on the features the user enables, it can connect to configured AI providers for API and OAuth traffic, to upstream resources required by CLIProxyAPI, and to this repository's GitHub Releases to check for signed app and proxy core updates.
+The app listens on `127.0.0.1` by default. If the user explicitly enables LAN access, the proxy listens on all device network interfaces so other devices on the local network can connect. Users should configure an API key before enabling LAN access and use this mode only on trusted networks.
+
+Depending on the features the user enables, the app can connect to configured AI providers for API and OAuth traffic, to upstream resources required by CLIProxyAPI, and to this repository's GitHub Releases to check for signed app and proxy core updates.
 
 The update checker does not send API keys or OAuth credentials. Its request contains only normal HTTPS metadata and an app version user agent.
 

@@ -35,7 +35,6 @@ auths/*
 docs/*
 !docs/android/**
 !docs/management-api-v8.md
-AGENTS.md
 CLAUDE.md
 GEMINI.md
 AGENTS.override.md

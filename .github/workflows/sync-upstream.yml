@@ -21,6 +21,7 @@ jobs:
   sync:
     name: Prepare latest stable CLIProxyAPI release
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     outputs:
       changed: ${{ steps.sync.outputs.changed }}
       publish: ${{ steps.sync.outputs.publish }}
@@ -31,9 +32,10 @@ jobs:
 
     steps:
       - name: Checkout Android repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Configure Git
         run: |
@@ -42,6 +44,7 @@ jobs:
 
       - name: Fetch upstream releases
         run: |
+          cp scripts/android/clean_sponsors.py "$RUNNER_TEMP/clean_sponsors.py"
           git remote add upstream https://github.com/router-for-me/CLIProxyAPI.git 2>/dev/null || true
           git fetch --force upstream main --tags
 
@@ -181,7 +184,7 @@ jobs:
             fi
           fi
 
-          python3 scripts/android/clean_sponsors.py
+          python3 "$RUNNER_TEMP/clean_sponsors.py"
           rm -f \
             .github/workflows/agents-md-guard.yml \
             .github/workflows/auto-retarget-main-pr-to-dev.yml \
@@ -208,14 +211,14 @@ jobs:
 
       - name: Set up Go
         if: steps.sync.outputs.changed == 'true'
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version: '1.26.x'
           cache: true
 
       - name: Set up JDK 17
         if: steps.sync.outputs.changed == 'true'
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -223,7 +226,7 @@ jobs:
 
       - name: Set up Android NDK
         if: steps.sync.outputs.changed == 'true'
-        uses: nttld/setup-ndk@v1
+        uses: nttld/setup-ndk@ed92fe6cadad69be94a966a7ee3271275e62f779 # v1
         with:
           ndk-version: r27c
           add-to-path: true
@@ -250,9 +253,13 @@ jobs:
 
       - name: Publish integrated source
         if: steps.sync.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          git push origin HEAD:main
+          auth_header="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $auth_header" \
+            push origin HEAD:main
 
   release:
     name: Build signed Android update

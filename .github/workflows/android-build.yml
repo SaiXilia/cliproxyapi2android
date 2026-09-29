@@ -14,6 +14,19 @@ on:
       - 'go.sum'
       - '.github/upstream-version'
       - '.github/workflows/android-build.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'android/**'
+      - 'cmd/**'
+      - 'internal/**'
+      - 'sdk/**'
+      - 'scripts/android/**'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/upstream-version'
+      - '.github/workflows/android-build.yml'
   workflow_dispatch:
 
 permissions:
@@ -23,28 +36,30 @@ jobs:
   build:
     name: Build Android APK & Native Core
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version: '1.26.x'
           cache: true
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: 'temurin'
           java-version: '17'
           cache: 'gradle'
 
       - name: Set up Android NDK
-        uses: nttld/setup-ndk@v1
+        uses: nttld/setup-ndk@ed92fe6cadad69be94a966a7ee3271275e62f779 # v1
         with:
           ndk-version: r27c
           add-to-path: true
@@ -91,7 +106,7 @@ jobs:
           ./gradlew assembleDebug -PcoreVersion="${core_version#v}"
 
       - name: Upload APK & CLI Binary Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: cliproxy-android-artifacts
           path: |
