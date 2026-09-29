@@ -120,6 +120,6 @@ http://127.0.0.1:8317/management.html
 ## 贡献与上游
 
 - 本项目最初为满足维护者的个人使用需求而创建，功能取舍会优先考虑实际使用场景与长期维护成本。
-- 欢迎提交 Android 端相关的 Issue 和 Pull Request；参与前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)，但请理解项目不保证接受所有功能请求。
+- 欢迎提交 Android 端相关的 Issue 和 Pull Request；参与前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。由于维护资源有限，部分功能请求可能暂时无法实现，感谢理解。
 - 请勿在公开 Issue 中上传 API Key、OAuth 文件、`config.yaml` 或应用私有数据。
 - 代理核心来自 [router-for-me/CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI)；核心相关的问题与改动请优先反馈至上游，归属说明见 [NOTICE.md](NOTICE.md)。
