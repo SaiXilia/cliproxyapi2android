@@ -169,7 +169,10 @@ jobs:
             unexpected=()
             for path in "${conflicts[@]}"; do
               case "$path" in
-                examples/*|README_JA.md|.github/workflows/agents-md-guard.yml|.github/workflows/auto-retarget-main-pr-to-dev.yml|.github/workflows/docker-image.yml|.github/workflows/pr-path-guard.yml|.github/workflows/pr-test-build.yml|.github/workflows/release.yaml)
+                README.md|README_EN.md)
+                  git restore --source=HEAD --staged --worktree -- "$path"
+                  ;;
+                examples/*|README_CN.md|README_JA.md|.github/workflows/agents-md-guard.yml|.github/workflows/auto-retarget-main-pr-to-dev.yml|.github/workflows/docker-image.yml|.github/workflows/pr-path-guard.yml|.github/workflows/pr-test-build.yml|.github/workflows/release.yaml)
                   git rm -f -- "$path"
                   ;;
                 *)
@@ -184,6 +187,8 @@ jobs:
             fi
           fi
 
+          # Keep Android-owned bilingual documentation even when upstream merges cleanly.
+          git restore --source=HEAD --staged --worktree -- README.md README_EN.md
           python3 "$RUNNER_TEMP/clean_sponsors.py"
           rm -f \
             .github/workflows/agents-md-guard.yml \
@@ -192,6 +197,7 @@ jobs:
             .github/workflows/pr-path-guard.yml \
             .github/workflows/pr-test-build.yml \
             .github/workflows/release.yaml \
+            README_CN.md \
             README_JA.md
           printf '%s\n' "$upstream_tag" > .github/upstream-version
 
