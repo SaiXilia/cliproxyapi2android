@@ -1,8 +1,14 @@
 name: Sync Stable Upstream Core
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/sync-upstream.yml'
   schedule:
-    - cron: '17 3 * * *'
+    # Check hourly away from the top-of-hour scheduling peak.
+    - cron: '17 * * * *'
   workflow_dispatch:
     inputs:
       upstream_tag:
@@ -34,6 +40,7 @@ jobs:
       - name: Checkout Android repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: main
           fetch-depth: 0
           persist-credentials: false
 
@@ -83,6 +90,10 @@ jobs:
           release_tag="$app_version-core.$core_version"
           if [[ "$current_tag" == "$upstream_tag" ]]; then
             echo "CLIProxyAPI $upstream_tag is already integrated"
+            source_ref="$(git rev-parse HEAD)"
+            if git show-ref --verify --quiet "refs/tags/$release_tag"; then
+              source_ref="$(git rev-list -n 1 "refs/tags/$release_tag")"
+            fi
             release_json="$RUNNER_TEMP/android-release.json"
             update_json="$RUNNER_TEMP/android-update.json"
             release_ready=false
@@ -109,7 +120,7 @@ jobs:
               raise SystemExit(1)
           print(assets["update.json"]["url"])
           PY
-              )"
+              )" || update_url=""
               if [[ -n "$update_url" ]] && curl --fail --silent --show-error --location \
                 -H "Accept: application/octet-stream" \
                 -H "Authorization: Bearer $GH_TOKEN" \
@@ -144,7 +155,7 @@ jobs:
               echo "publish=true" >> "$GITHUB_OUTPUT"
             fi
             echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
-            echo "source_ref=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            echo "source_ref=$source_ref" >> "$GITHUB_OUTPUT"
             echo "app_version=$app_version" >> "$GITHUB_OUTPUT"
             echo "core_version=$core_version" >> "$GITHUB_OUTPUT"
             exit 0

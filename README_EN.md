@@ -24,7 +24,7 @@ CLIProxyAPI Android runs a local AI proxy gateway directly on Android devices. I
 - **Background Reliability**: Uses a foreground service, `PARTIAL_WAKE_LOCK`, and `START_STICKY` recovery to keep the local proxy available while enabled.
 - **Persistent Lightweight Notification**: Clean status bar notification indicating service running status while preventing system suspension.
 - **16KB Memory Page Alignment**: The native C-Shared library (`libcliproxy.so`) is built with 16KB page alignment for modern Android devices.
-- **Automated Cloud CI/CD**: Built-in GitHub Actions workflows automatically sync with upstream core changes daily and build release-ready APK packages.
+- **Automated Cloud CI/CD**: Built-in GitHub Actions workflows check official upstream releases hourly, then automatically sync the core, build, and publish signed APK packages when a new version is available.
 
 ---
 
@@ -109,12 +109,12 @@ The app does not request contacts, location, camera, microphone, or storage acce
 ### Cloud Builds & Signed Releases
 - **Continuous Integration**: Pushing code or opening a pull request triggers GitHub Actions to cross-compile the Go core and package architecture-specific test APKs, available under the Actions tab.
 - **Manual App Releases**: Normal pushes only create test artifacts. To publish accumulated Android fixes, run **Release Signed Android Update** and enter the next app version, such as `1.1.2`.
-- **Automatic Core Releases**: The daily stable-upstream workflow detects new official `router-for-me/CLIProxyAPI` releases, merges and validates them, then publishes the new core without changing the manually selected Android app version.
+- **Automatic Core Releases**: The stable-upstream workflow checks official `router-for-me/CLIProxyAPI` releases hourly, merges and validates new versions, then publishes the new core without changing the manually selected Android app version. Builds are skipped when the version is unchanged and its release is complete; missing or incomplete releases are retried automatically. GitHub scheduled triggers can be delayed, so hourly checks provide further opportunities to catch up.
 - **Release Versions**: App and core versions remain independent. A release is displayed as `CLIProxyAPI Android 1.1.2 · Core 8.0.4` and uses the concise tag `1.1.2-core.8.0.4`. Android's internal version code still increases for every release. Each release includes separate signed `arm64-v8a` and `x86_64` APKs, `update.json`, and SHA-256 checksums.
 
 ### Updates and security
 
-- The app checks this repository's latest GitHub Release on startup and through a daily Android background job.
+- The app checks this repository's latest GitHub Release on every startup and when the user checks manually.
 - Update APKs must pass package name, version code, SHA-256, and signing-certificate verification before Android's installer is opened.
 - Android still requires the user to approve installation. The app does not silently load downloaded executable code.
 - See [Security Policy](SECURITY.md) and [Privacy](PRIVACY.md).

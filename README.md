@@ -24,7 +24,7 @@ CLIProxyAPI Android 在 Android 设备上本地运行 AI 代理网关，为本�
 - **后台运行可靠性**：使用前台服务、`PARTIAL_WAKE_LOCK` 与 `START_STICKY` 恢复机制，在服务开启期间维持本地代理运行。
 - **状态栏精简常驻**：纯净无扰的状态栏前台常驻通知，轻量显示服务运行状态并保障后台长效保活。
 - **16KB 内存页对齐**：原生 C-Shared 动态库（`libcliproxy.so`）按 16KB 页面要求构建，适配现代 Android 设备。
-- **云端全自动持续构建**：内置 GitHub Actions 流水线，每日自动同步上游核心更新并编译出最新 APK 安装包。
+- **云端全自动持续构建**：内置 GitHub Actions 流水线，每小时检查上游正式版本，发现新版后自动同步核心、构建并发布签名 APK 安装包。
 
 ---
 
@@ -109,12 +109,12 @@ http://127.0.0.1:8317/management.html
 ### 云端构建与签名发布
 - **持续集成构建**：推送代码或创建 Pull Request 后，GitHub Actions 会自动完成 Go 核心交叉编译并按架构打包测试版 APK，可在 Actions 页面下载。
 - **手动发布应用版本**：普通代码推送只生成测试构建，不会创建 Release。需要发布累积的 Android 修复时，手动运行 **Release Signed Android Update**，填写下一个应用版本号，例如 `1.1.2`。
-- **自动发布核心版本**：每日稳定版同步流程会检测 `router-for-me/CLIProxyAPI` 的最新正式版本；发现新版后会自动合并、验证并发布，但不会改变由你手动指定的 Android 应用版本。
+- **自动发布核心版本**：稳定版同步流程每小时检测 `router-for-me/CLIProxyAPI` 的最新正式版本；发现新版后会自动合并、验证并发布，但不会改变由你手动指定的 Android 应用版本。版本未变化且发布完整时跳过构建；发布缺失或不完整时自动补发。GitHub 定时触发可能延迟，每小时检查提供后续补查机会。
 - **独立版本格式**：应用版本与核心版本相互独立。Release 显示为 `CLIProxyAPI Android 1.1.2 · Core 8.0.4`，使用简洁 Tag `1.1.2-core.8.0.4`；每次发布仍会提高 Android 内部 `versionCode`。每个版本附带独立的 `arm64-v8a` 与 `x86_64` 签名 APK、`update.json` 与 SHA-256 校验文件。
 
 ### 更新与安全
 
-- App 启动时及 Android 每日后台任务会检查本仓库的最新 GitHub Release。
+- App 每次启动时以及用户手动检查时，会查询本仓库的最新 GitHub Release。
 - 更新 APK 必须通过包名、版本号、SHA-256 与签名证书验证，随后才会打开 Android 安装界面。
 - Android 仍会要求用户确认安装；App 不会静默加载远程可执行代码。
 - 参见 [安全策略](SECURITY.md) 与 [隐私说明](PRIVACY.md)。
