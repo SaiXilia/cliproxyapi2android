@@ -1,6 +1,5 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
 }
 
 fun quotedBuildConfigValue(value: String): String =
@@ -28,7 +27,7 @@ if (requireReleaseSigning && !hasReleaseSigning) {
 
 android {
     namespace = "com.cliproxy"
-    compileSdk = 34
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.cliproxy"
@@ -88,10 +87,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
     }
 
     buildFeatures {

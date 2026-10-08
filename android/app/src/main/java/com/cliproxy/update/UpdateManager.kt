@@ -325,7 +325,7 @@ object UpdateManager {
         } else {
             info.signatures
         }
-        return signatures.mapTo(mutableSetOf()) { signature ->
+        return signatures.orEmpty().mapTo(mutableSetOf()) { signature ->
             MessageDigest.getInstance("SHA-256")
                 .digest(signature.toByteArray())
                 .joinToString("") { byte -> "%02x".format(byte) }
