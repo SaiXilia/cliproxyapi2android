@@ -132,32 +132,45 @@ func TestTranslateRequestPairTranslatesDistinctPayloads(t *testing.T) {
 	}
 }
 
-func TestTranslateRequestPairPreservesPluginHookInvocations(t *testing.T) {
+func TestTranslateRequestPairInvokesPluginOncePerInput(t *testing.T) {
 	hooks := &pairRequestPluginHooks{}
 	sdktranslator.SetPluginHooks(hooks)
 	t.Cleanup(func() { sdktranslator.SetPluginHooks(nil) })
 
 	payload := geminiToolHistoryPayload(1)
-	base, work := TranslateRequestPairWithCodexMultiAgentV2(
-		context.Background(),
-		http.Header{},
-		&config.Config{},
-		sdktranslator.FormatGemini,
-		sdktranslator.FromString("antigravity"),
-		"gemini-3.6-flash-high",
-		payload,
-		payload,
-		true,
-	)
-
-	if hooks.calls != 2 {
-		t.Fatalf("plugin hook calls = %d, want 2", hooks.calls)
-	}
-	if got := gjson.GetBytes(base, "plugin_call").Int(); got != 1 {
-		t.Fatalf("baseline plugin_call = %d, want 1", got)
-	}
-	if got := gjson.GetBytes(work, "plugin_call").Int(); got != 2 {
-		t.Fatalf("working plugin_call = %d, want 2", got)
+	for _, stream := range []bool{false, true} {
+		for _, distinct := range []bool{false, true} {
+			hooks.calls = 0
+			request := payload
+			wantCalls := int64(1)
+			if distinct {
+				request = geminiToolHistoryPayload(2)
+				wantCalls = 2
+			}
+			base, work := TranslateRequestPairWithCodexMultiAgentV2(
+				context.Background(), http.Header{}, &config.Config{},
+				sdktranslator.FormatGemini, sdktranslator.FormatAntigravity,
+				"gemini-3.6-flash-high", payload, request, stream,
+			)
+			if hooks.calls != wantCalls {
+				t.Fatalf("stream=%v distinct=%v: plugin calls = %d, want %d", stream, distinct, hooks.calls, wantCalls)
+			}
+			if got := gjson.GetBytes(base, "plugin_call").Int(); got != 1 {
+				t.Fatalf("baseline plugin_call = %d, want 1", got)
+			}
+			if got := gjson.GetBytes(work, "plugin_call").Int(); got != wantCalls {
+				t.Fatalf("working plugin_call = %d, want %d", got, wantCalls)
+			}
+			if !distinct && !bytes.Equal(base, work) {
+				t.Fatal("same input produced different plugin results")
+			}
+			baselineBefore := bytes.Clone(base)
+			inputBefore := bytes.Clone(request)
+			work[0] = 'X'
+			if !bytes.Equal(base, baselineBefore) || !bytes.Equal(request, inputBefore) {
+				t.Fatal("working buffer aliases the baseline or input")
+			}
+		}
 	}
 }
 
@@ -202,7 +215,10 @@ func TestTranslateRequestEnvelopePairWithCodexMultiAgentV2UsesModelInfo(t *testi
 		NativeCapabilities: &registry.NativeCapabilities{WebSearch: &trueVal},
 	}
 	envelope := sdktranslator.RequestEnvelope{Format: sdktranslator.FormatOpenAIResponse, Model: model, ModelInfo: enabled}
-	base, work := TranslateRequestEnvelopePairWithCodexMultiAgentV2(context.Background(), http.Header{}, &config.Config{}, sdktranslator.FormatOpenAIResponse, sdktranslator.FormatAntigravity, envelope, input, input)
+	base, work, errPair := TranslateRequestEnvelopePairWithCodexMultiAgentV2(context.Background(), http.Header{}, &config.Config{}, sdktranslator.FormatOpenAIResponse, sdktranslator.FormatAntigravity, envelope, input, input)
+	if errPair != nil {
+		t.Fatalf("translate request pair: %v", errPair)
+	}
 	if gjson.GetBytes(base, "requestType").String() != "web_search" {
 		t.Fatalf("expected baseline requestType web_search, got: %s", base)
 	}
@@ -215,7 +231,10 @@ func TestTranslateRequestEnvelopePairWithCodexMultiAgentV2UsesModelInfo(t *testi
 		NativeCapabilities: &registry.NativeCapabilities{WebSearch: &falseVal},
 	}
 	envelope.ModelInfo = disabled
-	_, workDisabled := TranslateRequestEnvelopePairWithCodexMultiAgentV2(context.Background(), http.Header{}, &config.Config{}, sdktranslator.FormatOpenAIResponse, sdktranslator.FormatAntigravity, envelope, input, input)
+	_, workDisabled, errPair := TranslateRequestEnvelopePairWithCodexMultiAgentV2(context.Background(), http.Header{}, &config.Config{}, sdktranslator.FormatOpenAIResponse, sdktranslator.FormatAntigravity, envelope, input, input)
+	if errPair != nil {
+		t.Fatalf("translate request pair: %v", errPair)
+	}
 	if gjson.GetBytes(workDisabled, "requestType").String() == "web_search" {
 		t.Fatalf("expected non-web_search when capability disabled, got: %s", workDisabled)
 	}
@@ -330,14 +349,14 @@ func TestTranslateRequestCompatibilityForExecutorToolIntegerTypes(t *testing.T) 
 							headers = http.Header{"User-Agent": []string{ua}, "X-Openai-Subagent": []string{"collab_spawn"}}
 						}
 						payload := []byte(route.payload)
-						out, changed := TranslateRequestWithAPIKeyModelCompatibilityAndUpdateIntentForExecutor(t.Context(), headers, &config.Config{}, target.name, route.from, route.to, "model", payload, false, compat)
+						out, changed, _ := TranslateRequestWithAPIKeyModelCompatibilityAndUpdateIntentForExecutor(t.Context(), headers, &config.Config{}, target.name, route.from, route.to, "model", payload, false, compat)
 						outputs := map[string][]byte{
 							"update_intent": out,
 							"body":          TranslateRequestWithAPIKeyModelCompatibilityForExecutor(t.Context(), headers, &config.Config{}, target.name, route.from, route.to, "model", payload, false, compat),
 						}
 						if target.name == "" {
 							outputs["legacy_body"] = TranslateRequestWithAPIKeyModelCompatibility(t.Context(), headers, &config.Config{}, route.from, route.to, "model", payload, false, compat)
-							outputs["legacy_update_intent"], _ = TranslateRequestWithAPIKeyModelCompatibilityAndUpdateIntent(t.Context(), headers, &config.Config{}, route.from, route.to, "model", payload, false, compat)
+							outputs["legacy_update_intent"], _, _ = TranslateRequestWithAPIKeyModelCompatibilityAndUpdateIntent(t.Context(), headers, &config.Config{}, route.from, route.to, "model", payload, false, compat)
 						}
 						wantType := "number"
 						if ua == "codex_cli_rs/0.1" && !target.preserve {
