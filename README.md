@@ -96,7 +96,7 @@ http://127.0.0.1:8317/management.html
 ## ⚙️ 编译构建
 
 ### 本地编译
-- **环境要求**：Go 1.26+、Android NDK r27c+、JDK 17、Android SDK (API 34)
+- **环境要求**：Go 1.26+、Android NDK r27c+、JDK 17、Android SDK (API 37)
 - **编译原生库与 CLI**：
   ```bash
   bash scripts/android/build_android.sh

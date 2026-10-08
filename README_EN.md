@@ -96,7 +96,7 @@ The app does not request contacts, location, camera, microphone, or storage acce
 ## ⚙️ Build Instructions
 
 ### Local Build
-- **Prerequisites**: Go 1.26+, Android NDK r27c+, JDK 17, Android SDK (API 34)
+- **Prerequisites**: Go 1.26+, Android NDK r27c+, JDK 17, Android SDK (API 37)
 - **Build Native Libraries & CLI**:
   ```bash
   bash scripts/android/build_android.sh
