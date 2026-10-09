@@ -11,18 +11,28 @@ on:
         description: 'Integrated source commit produced by the upstream sync workflow'
         required: true
         type: string
+      prerelease:
+        description: 'Publish a test prerelease without changing the stable update channel'
+        required: false
+        default: false
+        type: boolean
   workflow_dispatch:
     inputs:
       app_version:
         description: 'Android app version to publish, for example 1.1.2'
         required: true
         type: string
+      prerelease:
+        description: 'Publish a test prerelease without changing the stable update channel'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-signed-android-${{ inputs.app_version }}-${{ inputs.source_ref || 'main' }}
+  group: release-signed-android-${{ inputs.prerelease && 'test' || 'stable' }}-${{ inputs.app_version }}-${{ inputs.source_ref || 'main' }}
   cancel-in-progress: false
 
 jobs:
@@ -36,11 +46,11 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          ref: ${{ inputs.source_ref || 'main' }}
+          ref: ${{ inputs.source_ref || (inputs.prerelease && github.sha) || 'main' }}
           persist-credentials: false
 
       - name: Record manually selected app version
-        if: inputs.source_ref == ''
+        if: ${{ inputs.source_ref == '' && !inputs.prerelease }}
         env:
           APP_VERSION: ${{ inputs.app_version }}
           GH_TOKEN: ${{ github.token }}
@@ -70,6 +80,7 @@ jobs:
         id: version
         env:
           REQUESTED_APP_VERSION: ${{ inputs.app_version }}
+          PRERELEASE: ${{ inputs.prerelease }}
         run: |
           set -euo pipefail
           integrated_tag="$(tr -d '[:space:]' < .github/upstream-version)"
@@ -90,7 +101,11 @@ jobs:
             exit 1
           fi
 
-          release_tag="$app_version-core.$core_version"
+          version_name="$app_version"
+          if [[ "$PRERELEASE" == "true" ]]; then
+            version_name="$app_version-test.$GITHUB_RUN_NUMBER"
+          fi
+          release_tag="$version_name-core.$core_version"
           source_commit="$(git rev-parse HEAD)"
           if git show-ref --verify --quiet "refs/tags/$release_tag"; then
             tag_commit="$(git rev-list -n 1 "$release_tag")"
@@ -104,7 +119,6 @@ jobs:
             echo "Android version code is out of range: $version_code" >&2
             exit 1
           fi
-          version_name="$app_version"
           echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
           echo "app_version=$app_version" >> "$GITHUB_OUTPUT"
           echo "core_version=$core_version" >> "$GITHUB_OUTPUT"
@@ -269,7 +283,7 @@ jobs:
                   },
               },
               "release_notes": (
-                  f"Android app {os.environ['APP_VERSION']}; "
+                  f"Android app {os.environ['VERSION_NAME']}; "
                   f"CLIProxyAPI core {os.environ['CORE_VERSION']}"
               ),
           }
@@ -309,9 +323,12 @@ jobs:
           tag_name: ${{ steps.version.outputs.release_tag }}
           name: ${{ steps.version.outputs.version_name }} · Core ${{ steps.version.outputs.core_version }}
           generate_release_notes: true
-          make_latest: true
+          prerelease: ${{ inputs.prerelease }}
+          make_latest: ${{ inputs.prerelease && 'false' || 'true' }}
           fail_on_unmatched_files: true
           body: |
+            ${{ inputs.prerelease && 'This is a test prerelease for manual installation. It does not replace the stable in-app update. To return to an older build without losing data, use a rollback APK with a newer version code.' || '' }}
+
             ## Version information
 
             | Component | Version |
