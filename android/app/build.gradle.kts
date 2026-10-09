@@ -1,6 +1,5 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
 }
 
 fun quotedBuildConfigValue(value: String): String =
@@ -28,7 +27,7 @@ if (requireReleaseSigning && !hasReleaseSigning) {
 
 android {
     namespace = "com.cliproxy"
-    compileSdk = 34
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.cliproxy"
@@ -97,10 +96,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
     buildFeatures {
         viewBinding = true
         buildConfig = true
@@ -114,9 +109,9 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.browser:browser:1.8.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation("androidx.core:core-ktx:1.19.1")
+    implementation("androidx.appcompat:appcompat:1.8.0")
+    implementation("com.google.android.material:material:1.14.0")
+    implementation("androidx.browser:browser:1.10.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
 }
