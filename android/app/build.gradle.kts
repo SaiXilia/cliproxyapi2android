@@ -6,7 +6,7 @@ fun quotedBuildConfigValue(value: String): String =
     "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
 val appVersionCodeValue = providers.gradleProperty("appVersionCode").orNull?.toIntOrNull() ?: 3
-val appVersionNameValue = providers.gradleProperty("appVersionName").orNull ?: "1.1.3"
+val appVersionNameValue = providers.gradleProperty("appVersionName").orNull ?: "1.1.4"
 val coreVersionValue = providers.gradleProperty("coreVersion").orNull ?: "8.0.3"
 
 val releaseStoreFile = System.getenv("CLIPROXY_SIGNING_STORE_FILE")
@@ -52,6 +52,13 @@ android {
     sourceSets {
         getByName("main") {
             jniLibs.srcDirs("src/main/jniLibs")
+        }
+    }
+
+    packaging {
+        jniLibs {
+            // Android extracts the compressed native core during installation.
+            useLegacyPackaging = true
         }
     }
 

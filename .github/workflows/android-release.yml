@@ -193,6 +193,21 @@ jobs:
             -PappVersionName="$VERSION_NAME" \
             -PcoreVersion="$CORE_VERSION"
 
+      - name: Verify native core compression
+        run: |
+          python3 - <<'PY'
+          import zipfile
+          from pathlib import Path
+
+          for abi in ("arm64-v8a", "x86_64"):
+              apk_path = Path(f"android/app/build/outputs/apk/release/app-{abi}-release.apk")
+              with zipfile.ZipFile(apk_path) as apk:
+                  core = apk.getinfo(f"lib/{abi}/libcliproxy.so")
+                  if core.compress_type != zipfile.ZIP_DEFLATED or not 0 < core.compress_size < core.file_size:
+                      raise SystemExit(f"Native core is not compressed in {apk_path}")
+                  print(f"{abi}: native core {core.file_size} -> {core.compress_size} bytes")
+          PY
+
       - name: Verify APK signatures
         run: |
           set -euo pipefail
