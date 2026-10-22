@@ -23,6 +23,7 @@ var (
 	ErrModelsNotFound            = errors.New("home models not found")
 	ErrPluginSyncUnsupported     = errors.New("home plugin sync is unsupported")
 	ErrDispatchFenced            = errors.New("home auth dispatch is fenced")
+	ErrRebalanceRequested        = errors.New("home cluster rebalance requested")
 	ErrCompareAndSwapUnsupported = errors.New("home compare-and-swap is unsupported")
 )
 
@@ -98,6 +99,7 @@ func New(_ config.HomeConfig) *Client {
 
 func (c *Client) Enabled() bool                               { return false }
 func (c *Client) HeartbeatOK() bool                           { return false }
+func (c *Client) FenceDispatch()                              {}
 func (c *Client) Close()                                      {}
 func (c *Client) NewLifetime() *Client                        { return c }
 func (c *Client) SetManagedLifetime(_ bool)                   {}

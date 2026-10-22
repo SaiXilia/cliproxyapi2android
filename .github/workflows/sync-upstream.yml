@@ -201,6 +201,13 @@ jobs:
           # Keep Android-owned bilingual documentation even when upstream merges cleanly.
           git restore --source=HEAD --staged --worktree -- README.md README_EN.md
           python3 "$RUNNER_TEMP/clean_sponsors.py"
+          # Cluster balancing requires the desktop-only Home client implementation.
+          for source in internal/home/cluster_balance*.go; do
+            [[ -f "$source" ]] || continue
+            if ! grep -q '^//go:build ' "$source"; then
+              sed -i '1i//go:build !android\n' "$source"
+            fi
+          done
           rm -f \
             .github/workflows/agents-md-guard.yml \
             .github/workflows/auto-retarget-main-pr-to-dev.yml \
