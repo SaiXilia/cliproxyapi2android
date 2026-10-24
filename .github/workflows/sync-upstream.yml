@@ -201,6 +201,13 @@ jobs:
           # Keep Android-owned bilingual documentation even when upstream merges cleanly.
           git restore --source=HEAD --staged --worktree -- README.md README_EN.md
           python3 "$RUNNER_TEMP/clean_sponsors.py"
+          # Cluster features, including latency sampling, require the desktop-only Home client.
+          for source in internal/home/cluster_*.go; do
+            [[ -f "$source" ]] || continue
+            if ! grep -q '^//go:build ' "$source"; then
+              sed -i '1i//go:build !android\n' "$source"
+            fi
+          done
           rm -f \
             .github/workflows/agents-md-guard.yml \
             .github/workflows/auto-retarget-main-pr-to-dev.yml \
@@ -230,7 +237,7 @@ jobs:
         if: steps.sync.outputs.changed == 'true'
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '1.26.x'
+          go-version-file: 'go.mod'
           cache: true
 
       - name: Set up JDK 17
