@@ -201,8 +201,11 @@ jobs:
           # Keep Android-owned bilingual documentation even when upstream merges cleanly.
           git restore --source=HEAD --staged --worktree -- README.md README_EN.md
           python3 "$RUNNER_TEMP/clean_sponsors.py"
-          # Cluster features, including latency sampling, require the desktop-only Home client.
-          for source in internal/home/cluster_*.go; do
+          # Home cluster features and mDNS browsing depend on desktop-only implementations.
+          for source in \
+            internal/home/cluster_*.go \
+            internal/discovery/browse_*.go \
+            internal/discovery/zeroconf*_test.go; do
             [[ -f "$source" ]] || continue
             if ! grep -q '^//go:build ' "$source"; then
               sed -i '1i//go:build !android\n' "$source"
@@ -239,6 +242,13 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
+
+      - name: Validate discovery platform boundaries
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          go test ./internal/discovery
+          CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build ./internal/discovery
 
       - name: Set up JDK 17
         if: steps.sync.outputs.changed == 'true'
