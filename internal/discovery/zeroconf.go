@@ -2693,13 +2693,11 @@ func NewZeroconfBrowser(ifaces ...net.Interface) *ZeroconfBrowser {
 }
 
 const (
-	maxDiscoveredServices      = 256
-	maxBrowseEntries           = 256
-	maxBrowseTXTRecords        = 64
-	maxBrowseTXTBytes          = 16 * 1024
-	maxDiscoveredAddresses     = 32
-	maxDiscoveredMetadataItems = 32
-	maxMetadataItemBytes       = 64
+	maxDiscoveredServices  = 256
+	maxBrowseEntries       = 256
+	maxBrowseTXTRecords    = 64
+	maxBrowseTXTBytes      = 16 * 1024
+	maxDiscoveredAddresses = 32
 )
 
 func browseEntryWithinLimits(entry *zeroconf.ServiceEntry) bool {
@@ -2887,45 +2885,6 @@ func appendUniqueIPs(dst, src []net.IP) []net.IP {
 		}
 	}
 	return dst
-}
-
-func appendUniqueStrings(dst, src []string) []string {
-	for _, value := range src {
-		value = strings.TrimSpace(value)
-		if value == "" || len(value) > maxMetadataItemBytes || len(dst) >= maxDiscoveredMetadataItems {
-			continue
-		}
-		duplicate := false
-		for _, existing := range dst {
-			if existing == value {
-				duplicate = true
-				break
-			}
-		}
-		if !duplicate {
-			dst = append(dst, value)
-		}
-	}
-	return dst
-}
-
-func parseTXTList(value string) []string {
-	var result []string
-	for len(value) > 0 && len(result) < maxDiscoveredMetadataItems {
-		item := value
-		if before, after, ok := strings.Cut(value, ","); ok {
-			item = before
-			value = after
-		} else {
-			value = ""
-		}
-		item = strings.TrimSpace(item)
-		if item == "" || len(item) > maxMetadataItemBytes {
-			continue
-		}
-		result = appendUniqueStrings(result, []string{item})
-	}
-	return result
 }
 
 // BrowseWithFallback discovers all AI gateways on the LAN (_ai-gateway._tcp) and prioritizes CPA instances.
