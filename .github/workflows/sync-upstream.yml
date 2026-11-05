@@ -255,7 +255,7 @@ jobs:
           set -euo pipefail
           python3 -m unittest discover -s scripts/android -p 'test_*.py'
           go test ./internal/discovery
-          CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build ./internal/discovery
+          CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build ./internal/discovery ./internal/home
 
       - name: Set up JDK 17
         if: steps.sync.outputs.changed == 'true'
