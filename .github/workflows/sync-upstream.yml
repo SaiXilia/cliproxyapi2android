@@ -52,6 +52,7 @@ jobs:
       - name: Fetch upstream releases
         run: |
           cp scripts/android/clean_sponsors.py "$RUNNER_TEMP/clean_sponsors.py"
+          cp scripts/android/resolve_go_format_conflict.py "$RUNNER_TEMP/resolve_go_format_conflict.py"
           git remote add upstream https://github.com/router-for-me/CLIProxyAPI.git 2>/dev/null || true
           git fetch --force upstream main --tags
 
@@ -186,6 +187,11 @@ jobs:
                 examples/*|README_CN.md|README_JA.md|.github/workflows/agents-md-guard.yml|.github/workflows/auto-retarget-main-pr-to-dev.yml|.github/workflows/docker-image.yml|.github/workflows/pr-path-guard.yml|.github/workflows/pr-test-build.yml|.github/workflows/release.yaml)
                   git rm -f -- "$path"
                   ;;
+                *.go)
+                  if ! python3 "$RUNNER_TEMP/resolve_go_format_conflict.py" "$path"; then
+                    unexpected+=("$path")
+                  fi
+                  ;;
                 *)
                   unexpected+=("$path")
                   ;;
@@ -243,12 +249,13 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
-      - name: Validate discovery platform boundaries
+      - name: Validate Android integration boundaries
         if: steps.sync.outputs.changed == 'true'
         run: |
           set -euo pipefail
+          python3 -m unittest discover -s scripts/android -p 'test_*.py'
           go test ./internal/discovery
-          CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build ./internal/discovery
+          CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build ./internal/discovery ./internal/home
 
       - name: Set up JDK 17
         if: steps.sync.outputs.changed == 'true'

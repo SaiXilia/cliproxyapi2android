@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/router-for-me/CLIProxyAPI/v8/internal/config"
+	"github.com/router-for-me/CLIProxyAPI/v8/internal/kvstore"
 	"github.com/router-for-me/CLIProxyAPI/v8/sdk/pluginstore"
 )
 
@@ -24,7 +25,7 @@ var (
 	ErrPluginSyncUnsupported     = errors.New("home plugin sync is unsupported")
 	ErrDispatchFenced            = errors.New("home auth dispatch is fenced")
 	ErrRebalanceRequested        = errors.New("home cluster rebalance requested")
-	ErrCompareAndSwapUnsupported = errors.New("home compare-and-swap is unsupported")
+	ErrCompareAndSwapUnsupported = kvstore.ErrCompareAndSwapUnsupported
 )
 
 type DispatchError struct {
@@ -84,14 +85,11 @@ type PluginTask struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
-type KVSetOptions struct {
-	EX time.Duration
-	PX time.Duration
-	NX bool
-	XX bool
-}
+type KVSetOptions = kvstore.KVSetOptions
 
 type Client struct{}
+
+var _ kvstore.KVClient = (*Client)(nil)
 
 func New(_ config.HomeConfig) *Client {
 	return &Client{}
