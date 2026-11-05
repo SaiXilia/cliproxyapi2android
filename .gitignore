@@ -10,6 +10,7 @@ config.yaml
 .env
 
 # Generated content
+__pycache__/
 bin/*
 /logs
 conv/*
