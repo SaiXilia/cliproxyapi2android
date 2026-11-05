@@ -273,6 +273,62 @@ func TestManagerExecuteStreamOpenAIImage401RejectsOuterTokenNotSIWC(t *testing.T
 	}
 }
 
+func TestHasAlternativeTargetForModelUsesRequestCredentialTrack(t *testing.T) {
+	manager := NewManager(nil, nil, nil)
+	manager.RegisterExecutor(&recordingSIWCExecutor{id: "codex"})
+	auth := &Auth{
+		ID:                      "alternative-siwc-request-selection",
+		Provider:                "codex",
+		Status:                  StatusActive,
+		RejectedSIWCAccessToken: "rejected-siwc-token",
+		Metadata: map[string]any{
+			"type":         "codex",
+			"access_token": "valid-outer-token",
+			"use_siwc":     true,
+			"siwc":         map[string]any{"access_token": "rejected-siwc-token"},
+		},
+	}
+	registerTestCodexModels(t, auth.ID)
+	if _, errRegister := manager.Register(context.Background(), auth); errRegister != nil {
+		t.Fatalf("Register() error = %v", errRegister)
+	}
+	for _, test := range []struct {
+		name       string
+		ctx        context.Context
+		headers    http.Header
+		excludedID string
+		want       bool
+	}{
+		{
+			name: "regular request uses rejected SIWC token",
+			ctx:  context.Background(),
+		},
+		{
+			name: "context selects valid outer token",
+			ctx:  WithCodexClientRequest(context.Background(), true),
+			want: true,
+		},
+		{
+			name:    "headers select valid outer token",
+			ctx:     context.Background(),
+			headers: http.Header{"User-Agent": []string{"codex_cli_rs"}},
+			want:    true,
+		},
+		{
+			name:       "excluded auth is not an alternative",
+			ctx:        WithCodexClientRequest(context.Background(), true),
+			excludedID: auth.ID,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			got := manager.HasAlternativeTargetForModel(test.ctx, []string{"codex"}, "gpt-5.4", cliproxyexecutor.Options{Headers: test.headers}, test.excludedID)
+			if got != test.want {
+				t.Fatalf("HasAlternativeTargetForModel() = %v, want %v", got, test.want)
+			}
+		})
+	}
+}
+
 func TestHomeDispatchHeadersSynthesizesCodexUserAgentForImageRequests(t *testing.T) {
 	ctx := WithCodexClientRequest(context.Background(), true)
 	in := http.Header{"User-Agent": []string{"Python-urllib/3.14"}}
