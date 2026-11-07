@@ -28,6 +28,7 @@ class CheckDependenciesTest(unittest.TestCase):
             "github.com/go-git/go-git/v6", "github.com/go-git/go-billy/v6/osfs",
             "github.com/minio/minio-go/v8", "github.com/redis/go-redis/v9",
             "github.com/pion/webrtc/v4", "github.com/charmbracelet/bubbletea/v2",
+            "github.com/libp2p/zeroconf",
         ]:
             with self.subTest(path=path):
                 self.assertFalse(self.check(json.dumps({"ImportPath": path})))
