@@ -207,11 +207,13 @@ jobs:
           # Keep Android-owned bilingual documentation even when upstream merges cleanly.
           git restore --source=HEAD --staged --worktree -- README.md README_EN.md
           python3 "$RUNNER_TEMP/clean_sponsors.py"
-          # Home cluster features and mDNS browsing depend on desktop-only implementations.
+          # These extensions depend on desktop-only Home, mDNS, and remote store implementations.
           for source in \
             internal/home/cluster_*.go \
             internal/discovery/browse_*.go \
-            internal/discovery/zeroconf*_test.go; do
+            internal/discovery/zeroconf*_test.go \
+            internal/store/*_refresh_*.go \
+            internal/store/refresh_journal_test.go; do
             [[ -f "$source" ]] || continue
             if ! grep -q '^//go:build ' "$source"; then
               sed -i '1i//go:build !android\n' "$source"
@@ -255,7 +257,9 @@ jobs:
           set -euo pipefail
           python3 -m unittest discover -s scripts/android -p 'test_*.py'
           go test ./internal/discovery
-          CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build ./internal/discovery ./internal/home
+          CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build ./internal/discovery ./internal/home ./internal/store
+          CGO_ENABLED=0 GOOS=android GOARCH=arm64 go list -deps -json ./cmd/server > "$RUNNER_TEMP/android-deps.json"
+          python3 scripts/android/check_deps.py "$RUNNER_TEMP/android-deps.json"
 
       - name: Set up JDK 17
         if: steps.sync.outputs.changed == 'true'
