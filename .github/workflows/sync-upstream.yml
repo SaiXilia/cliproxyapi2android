@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - '.github/workflows/sync-upstream.yml'
+      - 'scripts/android/**'
   schedule:
     # Check hourly away from the top-of-hour scheduling peak.
     - cron: '17 * * * *'
@@ -49,8 +50,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      - name: Set up Go for boundary tooling
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
       - name: Fetch upstream releases
         run: |
+          go build -o "$RUNNER_TEMP/android-boundaries" ./scripts/android/boundaries
           cp scripts/android/clean_sponsors.py "$RUNNER_TEMP/clean_sponsors.py"
           cp scripts/android/resolve_go_format_conflict.py "$RUNNER_TEMP/resolve_go_format_conflict.py"
           git remote add upstream https://github.com/router-for-me/CLIProxyAPI.git 2>/dev/null || true
@@ -188,7 +196,7 @@ jobs:
                   git rm -f -- "$path"
                   ;;
                 *.go)
-                  if ! python3 "$RUNNER_TEMP/resolve_go_format_conflict.py" "$path"; then
+                  if ! python3 "$RUNNER_TEMP/resolve_go_format_conflict.py" "$path" "$RUNNER_TEMP/android-boundaries"; then
                     unexpected+=("$path")
                   fi
                   ;;
@@ -207,18 +215,7 @@ jobs:
           # Keep Android-owned bilingual documentation even when upstream merges cleanly.
           git restore --source=HEAD --staged --worktree -- README.md README_EN.md
           python3 "$RUNNER_TEMP/clean_sponsors.py"
-          # These extensions depend on desktop-only Home, mDNS, and remote store implementations.
-          for source in \
-            internal/home/cluster_*.go \
-            internal/discovery/browse_*.go \
-            internal/discovery/zeroconf*_test.go \
-            internal/store/*_refresh_*.go \
-            internal/store/refresh_journal_test.go; do
-            [[ -f "$source" ]] || continue
-            if ! grep -q '^//go:build ' "$source"; then
-              sed -i '1i//go:build !android\n' "$source"
-            fi
-          done
+          "$RUNNER_TEMP/android-boundaries" -apply
           rm -f \
             .github/workflows/agents-md-guard.yml \
             .github/workflows/auto-retarget-main-pr-to-dev.yml \
@@ -252,14 +249,8 @@ jobs:
           cache: true
 
       - name: Validate Android integration boundaries
-        if: steps.sync.outputs.changed == 'true'
         run: |
-          set -euo pipefail
-          python3 -m unittest discover -s scripts/android -p 'test_*.py'
-          go test ./internal/discovery
-          CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build ./internal/discovery ./internal/home ./internal/store
-          CGO_ENABLED=0 GOOS=android GOARCH=arm64 go list -deps -json ./cmd/server > "$RUNNER_TEMP/android-deps.json"
-          python3 scripts/android/check_deps.py "$RUNNER_TEMP/android-deps.json"
+          bash scripts/android/validate_android.sh --fast
 
       - name: Set up JDK 17
         if: steps.sync.outputs.changed == 'true'
@@ -275,6 +266,10 @@ jobs:
         with:
           ndk-version: r27c
           add-to-path: true
+
+      - name: Validate native Android boundaries
+        if: steps.sync.outputs.changed == 'true'
+        run: bash scripts/android/validate_android.sh --native
 
       - name: Validate integrated Android source
         if: steps.sync.outputs.changed == 'true'
