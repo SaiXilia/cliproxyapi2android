@@ -12,7 +12,7 @@ FORBIDDEN_PREFIXES = [
     "github.com/pion/",
     "github.com/redis/go-redis/",
     "github.com/jackc/pgx/",
-    "github.com/go-git/go-git/",
+    "github.com/go-git/",
     "github.com/minio/minio-go/",
     "github.com/libp2p/zeroconf/",
     "github.com/charmbracelet/bubbletea",
@@ -27,7 +27,7 @@ def check_file(file_path):
     violations = []
     total_packages = 0
 
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, "r", encoding="utf-8-sig") as f:
         decoder = json.JSONDecoder()
         buffer = f.read()
         idx = 0
@@ -40,16 +40,30 @@ def check_file(file_path):
             if idx >= length:
                 break
 
-            obj, end = decoder.raw_decode(buffer, idx)
+            try:
+                obj, end = decoder.raw_decode(buffer, idx)
+            except ValueError as error:
+                print(f"[FAIL] Invalid dependency graph: {error}")
+                return False
             idx = end
             total_packages += 1
 
+            if not isinstance(obj, dict) or not isinstance(obj.get("ImportPath"), str) or not obj["ImportPath"]:
+                print("[FAIL] Dependency graph contains a package without an ImportPath")
+                return False
             pkg_path = obj.get("ImportPath", "")
+            if obj.get("Error") or obj.get("DepsErrors") or obj.get("Incomplete"):
+                print(f"[FAIL] Incomplete or failed package in dependency graph: {pkg_path}")
+                return False
             for forbidden in FORBIDDEN_PREFIXES:
-                if pkg_path.startswith(forbidden) or pkg_path == forbidden:
+                prefix = forbidden.rstrip("/")
+                if pkg_path == prefix or pkg_path.startswith(prefix + "/"):
                     violations.append((pkg_path, forbidden))
 
     print(f"Total analyzed packages in build graph: {total_packages}")
+    if total_packages == 0:
+        print("[FAIL] Dependency graph is empty")
+        return False
     if violations:
         print(f"\n[FATAL] Found {len(violations)} forbidden dependencies in Android compilation graph:")
         for pkg, forbidden in violations:
