@@ -54,7 +54,9 @@ jobs:
       - name: Validate upstream sync helpers
         run: |
           python3 -m unittest discover -s scripts/android -p 'test_*.py'
-          CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build ./internal/discovery ./internal/home
+          CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build ./internal/discovery ./internal/home ./internal/store
+          CGO_ENABLED=0 GOOS=android GOARCH=arm64 go list -deps -json ./cmd/server > "$RUNNER_TEMP/android-deps.json"
+          python3 scripts/android/check_deps.py "$RUNNER_TEMP/android-deps.json"
 
       - name: Set up JDK 17
         uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
