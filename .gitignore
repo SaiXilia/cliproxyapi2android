@@ -1,16 +1,12 @@
 # Binaries
 cli-proxy-api
 *.exe
-*.jks
-*.keystore
-*.p12
 
 # Configuration
 config.yaml
 .env
 
 # Generated content
-__pycache__/
 bin/*
 /logs
 conv/*
@@ -34,8 +30,8 @@ auths/*
 
 # Documentation
 docs/*
-!docs/android/**
 !docs/management-api-v8.md
+AGENTS.md
 CLAUDE.md
 GEMINI.md
 AGENTS.override.md
@@ -72,6 +68,13 @@ docker-compose.override.yml
 # Local LLM Wiki vault
 .llm-wiki
 
-# Build artifacts
+# Android repository overrides
+!AGENTS.md
+!/docs/android/
+!/docs/android/**
+*.jks
+*.keystore
+*.p12
+__pycache__/
 dist/
 screenshot.png
