@@ -12,11 +12,14 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
 
 const serverExitHelperEnv = "CLIPROXY_TEST_SERVER_EXIT_HELPER"
+
+var serverExitTestProcessAttributes syscall.SysProcAttr
 
 func TestServerExitHelper(t *testing.T) {
 	if os.Getenv(serverExitHelperEnv) != "1" {
@@ -39,6 +42,8 @@ func newServerExitCommand(t *testing.T, dir string, args ...string) (*exec.Cmd, 
 	t.Cleanup(cancel)
 	cmdArgs := append([]string{"-test.run=^TestServerExitHelper$", "--"}, args...)
 	command := exec.CommandContext(ctx, os.Args[0], cmdArgs...)
+	// Keep Bubble Tea's terminal fallback from opening the host console.
+	command.SysProcAttr = &serverExitTestProcessAttributes
 	command.Dir = dir
 	// Isolate from host store environment variables and prevent external network calls.
 	command.Env = append(os.Environ(),
