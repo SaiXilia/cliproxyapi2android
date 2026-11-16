@@ -4,11 +4,12 @@ package home
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/MoeForge/moego/json"
 )
 
 func TestDispatchFencePreservesConcurrencyReleaseUntilClose(t *testing.T) {
