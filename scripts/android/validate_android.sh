@@ -17,7 +17,8 @@ if [[ "$mode" == "--fast" ]]; then
     python3 -m unittest discover -s scripts/android -p 'test_*.py'
     go test "${boundary_packages[@]}"
     for arch in arm64 amd64; do
-        CGO_ENABLED=0 GOOS=android GOARCH="$arch" go build "${boundary_packages[@]}"
+        # Compile the Home API consumer to catch shared declarations hidden by build tags.
+        CGO_ENABLED=0 GOOS=android GOARCH="$arch" go build "${boundary_packages[@]}" ./sdk/cliproxy/auth
     done
     exit 0
 fi
