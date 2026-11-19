@@ -30,8 +30,8 @@ var boundaries = []boundary{
 	{
 		directory: "internal/home",
 		shared: "certificate.go concurrency_release.go concurrency_release_test.go " +
-			"in_flight_contract_test.go kv_helpers.go plugin_status.go plugin_status_test.go requests.go",
-		desktop: "client*.go cluster*.go global.go kv_helpers_test.go",
+			"in_flight_contract_test.go kv_helpers.go plugin_status.go plugin_status_test.go requests.go scheduler_types.go",
+		desktop: "client*.go cluster*.go global.go kv_helpers_test.go scheduler.go scheduler_test.go",
 	},
 	{
 		directory: "internal/discovery",
